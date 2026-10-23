@@ -1,0 +1,158 @@
+import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity } from 'react-native';
+import { Ionicons, Feather } from '@expo/vector-icons';
+
+export default function App() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.voltar}>{'<'}</Text>
+      <Image
+        source={require('./assets/PopMovie_escrito.png')}
+        style={styles.imagem_inicial}
+      />
+      <Text style={styles.title}>Olá Pedro!</Text>
+      <Text style={styles.text}>O que vamos assistir hoje?</Text>
+      <Image
+        source={require('./assets/tela_inicial.png')}
+        style={styles.image}
+      />
+      <View style={styles.botao}>
+        <Text style={styles.botaoTexto}>Sortear</Text>
+      </View>
+
+      <View style={styles.botao_filtros}>
+        <Ionicons
+            name="options-outline"
+            size={24}
+            color="black"
+            style={styles.icone_filtros}
+        />
+        <Text style={styles.botaoTexto_filtros}>Usar filtros</Text>
+      </View>
+
+      {/* Barra de navegação inferior */}
+      <View style={styles.barraNavegacao}>
+        <TouchableOpacity style={styles.itemNav} activeOpacity={0.7}>
+          <Ionicons name="home-outline" size={24} color="#953CFD" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.itemNav} activeOpacity={0.7}>
+          <Ionicons name="list-outline" size={24} color="#953CFD" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.itemNav} activeOpacity={0.7}>
+          <Feather name="check" size={24} color="#953CFD" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.itemNav} activeOpacity={0.7}>
+          <Ionicons name="person-outline" size={24} color="#953CFD" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    paddingTop: 40,
+  },
+
+  voltar: {
+    color: '#953CFD',
+    fontSize: 35,
+    position: 'absolute',
+    top: 45,
+    left: 25,
+  },
+
+  image: {
+    width: 180,
+    height: 140,
+    resizeMode: 'contain',
+    paddingTop: 60,
+    marginTop: 30,
+  },
+
+  imagem_inicial: {
+    width: 180,
+    height: 140,
+    resizeMode: 'contain',
+    marginTop: -30,
+  },
+
+  title: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    alignSelf: 'flex-start',
+    marginLeft: 20,
+    marginTop: -30,
+  },
+
+  text: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginTop: 5,
+    alignSelf: 'flex-start',
+    marginLeft: 20,
+  },
+
+  botao: {
+    backgroundColor: '#953CFD',
+    width: 140,
+    height: 40,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  botaoTexto: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+
+  botao_filtros: {
+    backgroundColor: '#FFFFFF',
+    width: 200,
+    height: 40,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 15,
+  },
+
+  botaoTexto_filtros: {
+    color: 'black',
+    fontSize: 16,
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+
+  icone_filtros: {
+    position: 'absolute',
+    left: 25,
+    transform: [{ rotate: '0deg' }],
+  },
+
+  barraNavegacao: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0c',
+    borderTopWidth: 1,
+    borderTopColor: '#1f1f23',
+    height: 60,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+
+  itemNav: {
+    padding: 10,
+  },
+});
