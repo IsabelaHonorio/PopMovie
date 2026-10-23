@@ -1,118 +1,239 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity, SafeAreaView, StatusBar, ScrollView } from 'react-native';
+
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
+
 import { Ionicons, Feather } from '@expo/vector-icons';
 
 export default function App() {
   const [pesquisa, setPesquisa] = useState('');
 
+  const [filmes, setFilmes] = useState([
+    {
+      id: '1',
+      nome: 'Filme 1',
+      imagem: require('./assets/filme10.png'),
+      bloqueado: true,
+    },
+    {
+      id: '2',
+      nome: 'Filme 2',
+      imagem: require('./assets/filme11.png'),
+      bloqueado: true,
+    },
+    {
+      id: '3',
+      nome: 'Filme 3',
+      imagem: require('./assets/filme9.png'),
+      bloqueado: true,
+    },
+    {
+      id: '4',
+      nome: 'Filme 4',
+      imagem: require('./assets/filme11.png'),
+      bloqueado: true,
+    },
+    {
+      id: '5',
+      nome: 'Filme 5',
+      imagem: require('./assets/filme10.png'),
+      bloqueado: true,
+    },
+    {
+      id: '6',
+      nome: 'Filme 6',
+      imagem: require('./assets/filme1.png'),
+      bloqueado: true,
+    },
+  ]);
+
+  // Bloquear ou desbloquear um filme
+  const alternarBloqueio = (id) => {
+    setFilmes((anteriores) =>
+      anteriores.map((filme) =>
+        filme.id === id
+          ? {
+              ...filme,
+              bloqueado: !filme.bloqueado,
+            }
+          : filme
+      )
+    );
+  };
+
+  // Filtrar filmes pela pesquisa
+  const filmesFiltrados = filmes.filter((filme) =>
+    filme.nome.toLowerCase().includes(pesquisa.toLowerCase())
+  );
+
   return (
-    <SafeAreaView style={estilos.conteiner}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
-      
-     
+    <View style={estilos.conteiner}>
+
+      {/* CABEÇALHO */}
       <View style={estilos.cabecalho}>
-        <TouchableOpacity style={estilos.botaoVoltar} activeOpacity={0.7}>
-          <Ionicons name="chevron-back" size={22} color="#a855f7" />
+        <TouchableOpacity
+          style={estilos.botaoVoltar}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="chevron-back"
+            size={22}
+            color="#a855f7"
+          />
         </TouchableOpacity>
-        <Text style={estilos.logoTexto}>Pop<Text style={estilos.logoDestaque}>Movie</Text></Text>
+
+        <Image
+          source={require('./assets/PopMovielogo.png')}
+          style={estilos.logoCabecalho}
+          resizeMode="contain"
+        />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={estilos.conteudoRolagem}>
-        
-        
+      <ScrollView
+        showsVerticalScrollIndicator={true}
+        contentContainerStyle={estilos.conteudoRolagem}
+      >
+
+        {/* AVISO */}
         <View style={estilos.secaoAviso}>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1585647347385-251f45695a78?w=150' }} 
-            style={estilos.iconePipoca} 
+          <Image
+            style={estilos.iconePipoca}
+            source={require('./assets/pbl.png')}
+            resizeMode="cover"
           />
+
           <Text style={estilos.textoAviso}>
-            Estes itens estão bloqueados.{'\n'}Desbloqueie-os para sorteá-los.
+            Estes itens estão bloqueados.
+            {'\n'}
+            Desbloqueie-os para sorteá-los.
           </Text>
         </View>
 
-        {/* Barra de Pesquisa */}
+        {/* BARRA DE PESQUISA */}
         <View style={estilos.caixaPesquisa}>
           <TextInput
             style={estilos.campoPesquisa}
-            placeholder=""
+            placeholder="Pesquisar filmes..."
             placeholderTextColor="#6b7280"
             value={pesquisa}
             onChangeText={setPesquisa}
           />
-          <Ionicons name="search" size={20} color="#a855f7" />
+
+          <Ionicons
+            name="search"
+            size={20}
+            color="#a855f7"
+          />
         </View>
 
-        {/* Grade de Filmes Bloqueados */}
+        {/* GRADE DE FILMES */}
         <View style={estilos.gradeFilmes}>
-          
-          {/* Filme 1 */}
-          <View style={estilos.cartaoFilme}>
-            <View style={estilos.containerPoster}>
-              <Image 
-                source={{ uri: 'https://image.tmdb.org/t/p/w500/kOVEVeg59E0wsnXmF9nrh6OmWII.jpg' }} 
-                style={estilos.posterFilme} 
-              />
-              <View style={estilos.sobreposicaoBloqueio}>
-                <Ionicons name="lock-closed" size={26} color="#a855f7" />
-              </View>
-            </View>
-            <TouchableOpacity style={estilos.botaoAcao}>
-              <Ionicons name="lock-open-outline" size={18} color="#000000" />
-            </TouchableOpacity>
-          </View>
+          {filmesFiltrados.map((filme) => (
+            <View
+              key={filme.id}
+              style={estilos.cartaoFilme}
+            >
 
-          {/* Filme 2 */}
-          <View style={estilos.cartaoFilme}>
-            <View style={estilos.containerPoster}>
-              <Image 
-                source={{ uri: 'https://image.tmdb.org/t/p/w500/wWba3TaojhK7NdycRhoQpsG0FaH.jpg' }} 
-                style={estilos.posterFilme} 
-              />
-              <View style={estilos.sobreposicaoBloqueio}>
-                <Ionicons name="lock-closed" size={26} color="#a855f7" />
-              </View>
-            </View>
-            <TouchableOpacity style={estilos.botaoAcao}>
-              <Ionicons name="lock-open-outline" size={18} color="#000000" />
-            </TouchableOpacity>
-          </View>
+              {/* PÔSTER E CADEADO */}
+              <View style={estilos.containerPoster}>
+                <Image
+                  source={filme.imagem}
+                  style={estilos.posterFilme}
+                  resizeMode="cover"
+                />
 
-          {/* Filme 3 */}
-          <View style={estilos.cartaoFilme}>
-            <View style={estilos.containerPoster}>
-              <Image 
-                source={{ uri: 'https://image.tmdb.org/t/p/w500/wWba3TaojhK7NdycRhoQpsG0FaH.jpg' }} 
-                style={estilos.posterFilme} 
-              />
-              <View style={estilos.sobreposicaoBloqueio}>
-                <Ionicons name="lock-closed" size={26} color="#a855f7" />
+                {filme.bloqueado && (
+                  <View style={estilos.sobreposicaoBloqueio}>
+                    <Ionicons
+                      name="lock-closed"
+                      size={26}
+                      color="#a855f7"
+                    />
+                  </View>
+                )}
               </View>
-            </View>
-            <TouchableOpacity style={estilos.botaoAcao}>
-              <Ionicons name="lock-open-outline" size={18} color="#000000" />
-            </TouchableOpacity>
-          </View>
 
+              {/* BOTÃO DE BLOQUEAR E DESBLOQUEAR */}
+              <TouchableOpacity
+                style={[
+                  estilos.botaoAcao,
+                  {
+                    backgroundColor: filme.bloqueado
+                      ? '#a855f7'
+                      : '#22c55e',
+                  },
+                ]}
+                onPress={() => alternarBloqueio(filme.id)}
+              >
+                <Ionicons
+                  name={
+                    filme.bloqueado
+                      ? 'lock-open-outline'
+                      : 'lock-closed-outline'
+                  }
+                  size={18}
+                  color="#000000"
+                />
+
+              
+        
+              </TouchableOpacity>
+
+            </View>
+          ))}
         </View>
+
+        {filmesFiltrados.length === 0 && (
+          <Text style={estilos.mensagemVazia}>
+            Nenhum filme encontrado.
+          </Text>
+        )}
 
       </ScrollView>
 
-      {/* Barra de Navegação Inferior */}
+      {/* BARRA DE NAVEGAÇÃO */}
       <View style={estilos.barraNavegacao}>
         <TouchableOpacity style={estilos.itemNav}>
-          <Ionicons name="home-outline" size={24} color="#a855f7" />
+          <Ionicons
+            name="home-outline"
+            size={24}
+            color="#a855f7"
+          />
         </TouchableOpacity>
+
         <TouchableOpacity style={estilos.itemNav}>
-          <Ionicons name="list-outline" size={24} color="#a855f7" />
+          <Ionicons
+            name="list-outline"
+            size={24}
+            color="#a855f7"
+          />
         </TouchableOpacity>
+
         <TouchableOpacity style={estilos.itemNav}>
-          <Feather name="check" size={24} color="#a855f7" />
+          <Feather
+            name="check"
+            size={24}
+            color="#a855f7"
+          />
         </TouchableOpacity>
+
         <TouchableOpacity style={estilos.itemNav}>
-          <Ionicons name="person-outline" size={24} color="#a855f7" />
+          <Ionicons
+            name="person-outline"
+            size={24}
+            color="#a855f7"
+          />
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+
+    </View>
   );
 }
 
@@ -122,12 +243,14 @@ const estilos = StyleSheet.create({
     backgroundColor: '#000000',
     paddingTop: 10,
   },
+
   cabecalho: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 16,
   },
+
   botaoVoltar: {
     width: 38,
     height: 38,
@@ -139,19 +262,17 @@ const estilos = StyleSheet.create({
     borderColor: '#222226',
     marginRight: 16,
   },
-  logoTexto: {
-    color: '#ffffff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    fontStyle: 'italic',
+
+  logoCabecalho: {
+    width: 140,
+    height: 40,
   },
-  logoDestaque: {
-    color: '#eab308',
-  },
+
   conteudoRolagem: {
     paddingHorizontal: 20,
     paddingBottom: 30,
   },
+
   secaoAviso: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -160,21 +281,24 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#222226',
     padding: 12,
-    marginBottom: 20,
+    marginBottom: 30,
   },
+
   iconePipoca: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 100,
+    height: 100,
     marginRight: 12,
   },
+
   textoAviso: {
     flex: 1,
     color: '#ffffff',
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
+     alignText: 'center',
   },
+
   caixaPesquisa: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -184,43 +308,65 @@ const estilos = StyleSheet.create({
     height: 44,
     marginBottom: 24,
   },
+
   campoPesquisa: {
     flex: 1,
     color: '#000000',
     fontSize: 15,
   },
+
   gradeFilmes: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
   },
+
   cartaoFilme: {
     width: '31%',
     marginBottom: 16,
   },
+
   containerPoster: {
     position: 'relative',
     borderRadius: 10,
     overflow: 'hidden',
     marginBottom: 8,
   },
+
   posterFilme: {
     width: '100%',
     height: 150,
   },
+
   sobreposicaoBloqueio: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   botaoAcao: {
-    backgroundColor: '#a855f7',
     borderRadius: 8,
-    height: 28,
+    minHeight: 32,
+    paddingHorizontal: 2,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 3,
   },
+
+  textoBotaoAcao: {
+    color: '#000000',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+
+  mensagemVazia: {
+    color: '#ffffff',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+
   barraNavegacao: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -230,7 +376,9 @@ const estilos = StyleSheet.create({
     borderTopColor: '#1f1f23',
     height: 60,
   },
+
   itemNav: {
     padding: 10,
   },
 });
+
