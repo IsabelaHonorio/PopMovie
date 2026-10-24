@@ -16,15 +16,15 @@ import { Ionicons } from '@expo/vector-icons';
 export default function App() {
   // Avatares salvos na pasta assets
   const avatares = [
-    { id: '10', imagem: require('./assets/10.png') },
-    { id: '11', imagem: require('./assets/11.png') },
-    { id: '18', imagem: require('./assets/18.png') },
-    { id: '19', imagem: require('./assets/19.png') },
-    { id: '3', imagem: require('./assets/3.png') },
-    { id: '30', imagem: require('./assets/30.png') },
-    { id: '5', imagem: require('./assets/5.png') },
-    { id: '6', imagem: require('./assets/6.png') },
-    { id: '13', imagem: require('./assets/15.png') },
+    { id: '10', imagem: require('./assets/avatar/10.png') },
+    { id: '11', imagem: require('./assets/avatar/11.png') },
+    { id: '18', imagem: require('./assets/avatar/18.png') },
+    { id: '19', imagem: require('./assets/avatar/19.png') },
+    { id: '3', imagem: require('./assets/avatar/3.png') },
+    { id: '30', imagem: require('./assets/avatar/30.png') },
+    { id: '5', imagem: require('./assets/avatar/5.png') },
+    { id: '6', imagem: require('./assets/avatar/6.png') },
+    { id: '13', imagem: require('./assets/avatar/15.png') },
   ];
 
   // Começa com o primeiro avatar selecionado

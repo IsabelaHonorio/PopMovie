@@ -8,79 +8,63 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  FlatList,
 } from 'react-native';
 
 import { Ionicons, Feather } from '@expo/vector-icons';
 
-export default function App() {
+const filmesIniciais = [
+  { id: '1', nome: 'Filme 1', imagem: 'https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', bloqueado: true },
+  { id: '2', nome: 'Filme 2', imagem: 'https://image.tmdb.org/t/p/w200/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg', bloqueado: true },
+  { id: '3', nome: 'Filme 3', imagem: 'https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg', bloqueado: true },
+  { id: '4', nome: 'Filme 4', imagem: 'https://image.tmdb.org/t/p/w200/7fn624j5lj3xTme2SgiLCeuedmO.jpg', bloqueado: true },
+  { id: '5', nome: 'Filme 5', imagem: 'https://image.tmdb.org/t/p/w200/8UlWHLMpgZm9bx6QYh0NFoq67TZ.jpg', bloqueado: true },
+  { id: '6', nome: 'Filme 6', imagem: 'https://image.tmdb.org/t/p/w200/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg', bloqueado: true },
+];
+
+export default function BloqueadosScreen({ navigation, route, voltar }) {
+  const { apelido, senha } = route?.params || {};
+  const voltarParaPerfil = () => {
+    if (typeof voltar === 'function') {
+      voltar();
+      return;
+    }
+
+    if (navigation) {
+      navigation.navigate('Perfil', { apelido, senha });
+      return;
+    }
+  };
+
+  const irParaPrincipal = () => navigation?.navigate('Principal', { apelido, senha });
+  const irParaMinhaLista = () => navigation?.navigate('MinhaLista', { apelido, senha });
+  const irParaConteudosAvaliados = () => navigation?.navigate('ConteudosAvaliados', { apelido, senha });
+  const irParaPerfil = () => navigation?.navigate('Perfil', { apelido, senha });
+
   const [pesquisa, setPesquisa] = useState('');
+  const [filmes, setFilmes] = useState(filmesIniciais);
 
-  const [filmes, setFilmes] = useState([
-    {
-      id: '1',
-      nome: 'Filme 1',
-      imagem: require('./assets/filme10.png'),
-      bloqueado: true,
-    },
-    {
-      id: '2',
-      nome: 'Filme 2',
-      imagem: require('./assets/filme11.png'),
-      bloqueado: true,
-    },
-    {
-      id: '3',
-      nome: 'Filme 3',
-      imagem: require('./assets/filme9.png'),
-      bloqueado: true,
-    },
-    {
-      id: '4',
-      nome: 'Filme 4',
-      imagem: require('./assets/filme11.png'),
-      bloqueado: true,
-    },
-    {
-      id: '5',
-      nome: 'Filme 5',
-      imagem: require('./assets/filme10.png'),
-      bloqueado: true,
-    },
-    {
-      id: '6',
-      nome: 'Filme 6',
-      imagem: require('./assets/filme1.png'),
-      bloqueado: true,
-    },
-  ]);
-
-  // Bloquear ou desbloquear um filme
   const alternarBloqueio = (id) => {
     setFilmes((anteriores) =>
       anteriores.map((filme) =>
         filme.id === id
-          ? {
-              ...filme,
-              bloqueado: !filme.bloqueado,
-            }
+          ? { ...filme, bloqueado: !filme.bloqueado }
           : filme
       )
     );
   };
 
-  // Filtrar filmes pela pesquisa
   const filmesFiltrados = filmes.filter((filme) =>
     filme.nome.toLowerCase().includes(pesquisa.toLowerCase())
   );
 
   return (
     <View style={estilos.conteiner}>
-
-      {/* CABEÇALHO */}
       <View style={estilos.cabecalho}>
         <TouchableOpacity
           style={estilos.botaoVoltar}
           activeOpacity={0.7}
+          onPress={voltarParaPerfil}
         >
           <Ionicons
             name="chevron-back"
@@ -100,8 +84,6 @@ export default function App() {
         showsVerticalScrollIndicator={true}
         contentContainerStyle={estilos.conteudoRolagem}
       >
-
-        {/* AVISO */}
         <View style={estilos.secaoAviso}>
           <Image
             style={estilos.iconePipoca}
@@ -110,13 +92,11 @@ export default function App() {
           />
 
           <Text style={estilos.textoAviso}>
-            Estes itens estão bloqueados.
-            {'\n'}
+            Estes itens estão bloqueados.{'\n'}
             Desbloqueie-os para sorteá-los.
           </Text>
         </View>
 
-        {/* BARRA DE PESQUISA */}
         <View style={estilos.caixaPesquisa}>
           <TextInput
             style={estilos.campoPesquisa}
@@ -133,23 +113,23 @@ export default function App() {
           />
         </View>
 
-        {/* GRADE DE FILMES */}
-        <View style={estilos.gradeFilmes}>
-          {filmesFiltrados.map((filme) => (
-            <View
-              key={filme.id}
-              style={estilos.cartaoFilme}
-            >
-
-              {/* PÔSTER E CADEADO */}
+        <FlatList
+          data={filmesFiltrados}
+          keyExtractor={(item) => item.id}
+          numColumns={3}
+          columnWrapperStyle={estilos.columnWrapper}
+          contentContainerStyle={estilos.listaFilmes}
+          scrollEnabled={false}
+          renderItem={({ item }) => (
+            <View style={estilos.cartaoFilme}>
               <View style={estilos.containerPoster}>
                 <Image
-                  source={filme.imagem}
+                  source={{ uri: item.imagem }}
                   style={estilos.posterFilme}
                   resizeMode="cover"
                 />
 
-                {filme.bloqueado && (
+                {item.bloqueado && (
                   <View style={estilos.sobreposicaoBloqueio}>
                     <Ionicons
                       name="lock-closed"
@@ -160,79 +140,44 @@ export default function App() {
                 )}
               </View>
 
-              {/* BOTÃO DE BLOQUEAR E DESBLOQUEAR */}
               <TouchableOpacity
                 style={[
                   estilos.botaoAcao,
-                  {
-                    backgroundColor: filme.bloqueado
-                      ? '#a855f7'
-                      : '#22c55e',
-                  },
+                  { backgroundColor: item.bloqueado ? '#a855f7' : '#22c55e' },
                 ]}
-                onPress={() => alternarBloqueio(filme.id)}
+                onPress={() => alternarBloqueio(item.id)}
               >
                 <Ionicons
-                  name={
-                    filme.bloqueado
-                      ? 'lock-open-outline'
-                      : 'lock-closed-outline'
-                  }
+                  name={item.bloqueado ? 'lock-open-outline' : 'lock-closed-outline'}
                   size={18}
                   color="#000000"
                 />
-
-              
-        
               </TouchableOpacity>
-
             </View>
-          ))}
-        </View>
-
-        {filmesFiltrados.length === 0 && (
-          <Text style={estilos.mensagemVazia}>
-            Nenhum filme encontrado.
-          </Text>
-        )}
-
+          )}
+          ListEmptyComponent={
+            <Text style={estilos.mensagemVazia}>Nenhum filme encontrado.</Text>
+          }
+        />
       </ScrollView>
 
-      {/* BARRA DE NAVEGAÇÃO */}
       <View style={estilos.barraNavegacao}>
-        <TouchableOpacity style={estilos.itemNav}>
-          <Ionicons
-            name="home-outline"
-            size={24}
-            color="#a855f7"
-          />
+        <TouchableOpacity style={estilos.itemNav} onPress={irParaPrincipal}>
+          <Ionicons name="home-outline" size={24} color="#a855f7" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={estilos.itemNav}>
-          <Ionicons
-            name="list-outline"
-            size={24}
-            color="#a855f7"
-          />
+        <TouchableOpacity style={estilos.itemNav} onPress={irParaMinhaLista}>
+          <Ionicons name="list-outline" size={24} color="#a855f7" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={estilos.itemNav}>
-          <Feather
-            name="check"
-            size={24}
-            color="#a855f7"
-          />
+        <TouchableOpacity style={estilos.itemNav} onPress={irParaConteudosAvaliados}>
+          <Feather name="check" size={24} color="#a855f7" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={estilos.itemNav}>
-          <Ionicons
-            name="person-outline"
-            size={24}
-            color="#a855f7"
-          />
+        <TouchableOpacity style={estilos.itemNav} onPress={irParaPerfil}>
+          <Ionicons name="person-outline" size={24} color="#a855f7" />
         </TouchableOpacity>
       </View>
-
     </View>
   );
 }
@@ -296,7 +241,7 @@ const estilos = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
-     alignText: 'center',
+    textAlign: 'center',
   },
 
   caixaPesquisa: {
@@ -315,10 +260,13 @@ const estilos = StyleSheet.create({
     fontSize: 15,
   },
 
-  gradeFilmes: {
-    flexDirection: 'row',
+  listaFilmes: {
+    paddingBottom: 10,
+  },
+
+  columnWrapper: {
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
+    marginBottom: 16,
   },
 
   cartaoFilme: {
@@ -352,13 +300,6 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 3,
-  },
-
-  textoBotaoAcao: {
-    color: '#000000',
-    fontSize: 10,
-    fontWeight: 'bold',
   },
 
   mensagemVazia: {

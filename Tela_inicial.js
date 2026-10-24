@@ -1,100 +1,85 @@
-
 import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, commonStyles } from './theme';
 
-export default function App() {
+export default function TelaInicial({ navigation }) {
   return (
-    <View style={styles.container}>
-
+    <View style={commonStyles.container}>
       <View style={styles.conteudo}>
         <Image
-          style={styles.image}
-          source={require('./assets/logo.png')}
+          style={styles.logoGrande}
+          source={require('./assets/Logo.png')}
           resizeMode="contain"
         />
-
-        <Text style={styles.title}>
-          Não sabe o que assistir?{"\n"}
-          Deixe o <Text style={styles.destaque}>PopMovie</Text> decidir!
-        </Text>
+        <View style={styles.textoContainer}>
+          <Text style={styles.title}>
+            Não sabe o que assistir?{"\n"}
+            Deixe o <Text style={styles.destaque}>PopMovie</Text> decidir!
+          </Text>
+        </View>
       </View>
 
       <View style={styles.botoes}>
-        
         <Pressable
-          style={styles.botao}
-          onPress={() => console.log('Abrir tela de Login')}
+          style={commonStyles.primaryButton}
+          onPress={() => navigation.navigate('Login')}
         >
           <View style={styles.conteudoBotao}>
             <Ionicons name="person-outline" size={22} color="white" />
-            <Text style={styles.textoBotao}>Login</Text>
+            <Text style={commonStyles.primaryButtonText}>Login</Text>
           </View>
         </Pressable>
 
         <Pressable
-          style={styles.botao}
-          onPress={() => console.log('Abrir tela de Cadastro')}
+          style={commonStyles.primaryButton}
+          onPress={() => navigation.navigate('Cadastro')}
         >
-          <Text style={styles.textoBotao}>Realizar cadastro</Text>
+          <Text style={commonStyles.primaryButtonText}>Realizar cadastro</Text>
         </Pressable>
-
       </View>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'black',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    padding: 20,
-  },
-
   conteudo: {
     alignItems: 'center',
     width: '100%',
+    marginTop: 18,
   },
 
-  image: {
-    width: 300,
-    height: 200,
+  logoGrande: {
+    width: 340,
+    height: 210,
+    resizeMode: 'contain',
   },
 
   title: {
-    color: 'white',
+    color: COLORS.text,
     fontSize: 25,
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 10,
+    lineHeight: 34,
   },
 
   destaque: {
-    color: '#983BFF',
+    color: COLORS.primary,
+    fontWeight: '700',
   },
 
   botoes: {
-    width: '90%',
-    gap: 25,
-  },
-
-  botao: {
-    backgroundColor: '#983BFF',
-    height: 50,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  textoBotao: {
-    color: 'white',
-    fontSize: 20,
+    width: '100%',
+    gap: 40,
+    marginTop: 'auto',
+    marginBottom: 64,
   },
 
   conteudoBotao: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
+  textoContainer: {
+    marginTop: 60,
+  }
 });

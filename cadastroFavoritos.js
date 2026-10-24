@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   View,
@@ -11,20 +10,35 @@ import {
   Image,
 } from "react-native";
 
-export default function App() {
-  const [favorites, setFavorites] = useState(Array(6).fill(null));
+import { getFavorites, setFavoriteAt } from './favoritesStore';
+
+export default function App({ navigation, route }) {
+  const [favorites, setFavorites] = useState(getFavorites());
+
+  useEffect(() => {
+    if (route?.params?.selectedMovie && route.params.slotIndex !== undefined) {
+      const { selectedMovie, slotIndex } = route.params;
+
+      const nextFavorites = setFavoriteAt(slotIndex, selectedMovie);
+      setFavorites(nextFavorites);
+
+      navigation.setParams({ selectedMovie: undefined, slotIndex: undefined });
+    }
+  }, [route?.params?.selectedMovie, route?.params?.slotIndex]);
 
   const handleBack = () => {
-    // Navegação será implementada depois.
+    navigation.navigate('Cadastro');
   };
 
   const handleAddFavorite = (index) => {
-    // Seleção de filmes será implementada depois.
-    console.log("Adicionar favorito:", index + 1);
+    navigation.navigate('BuscaSemBarra', { slotIndex: index });
   };
 
   const handleRegister = () => {
-    // Cadastro será implementado depois.
+    navigation.navigate('Principal', {
+      apelido: 'Pedro',
+      senha: '123456',
+    });
   };
 
   return (
@@ -72,10 +86,18 @@ export default function App() {
                   activeOpacity={0.75}
                   accessibilityLabel={`Adicionar favorito ${index + 1}`}
                 >
-                  <View style={styles.plusContainer}>
-                    <View style={styles.plusVertical} />
-                    <View style={styles.plusHorizontal} />
-                  </View>
+                  {favorite ? (
+                    <Image
+                      source={{ uri: favorite.poster }}
+                      style={styles.favoritePoster}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.plusContainer}>
+                      <View style={styles.plusVertical} />
+                      <View style={styles.plusHorizontal} />
+                    </View>
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -144,52 +166,6 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
 
-  popcorn: {
-    fontSize: 66,
-    lineHeight: 76,
-    textAlign: "center",
-    marginBottom: -4,
-  },
-
-  logoTextContainer: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "center",
-    marginTop: -2,
-  },
-
-  logoPop: {
-    color: "#FFC928",
-    fontSize: 34,
-    fontWeight: "900",
-    fontStyle: "italic",
-    letterSpacing: -2,
-    textShadowColor: "#6B2AC5",
-    textShadowOffset: { width: 1, height: 3 },
-    textShadowRadius: 2,
-  },
-
-  logoMovie: {
-    color: "#FFFFFF",
-    fontSize: 32,
-    fontWeight: "900",
-    fontStyle: "italic",
-    letterSpacing: -2,
-    textShadowColor: "#6B2AC5",
-    textShadowOffset: { width: 1, height: 3 },
-    textShadowRadius: 2,
-  },
-
-  logoUnderline: {
-    width: 80,
-    height: 8,
-    borderTopWidth: 4,
-    borderColor: "#9638FF",
-    borderRadius: 50,
-    marginTop: 5,
-    transform: [{ rotate: "-7deg" }],
-  },
-
   favoritesSection: {
     width: "100%",
     alignItems: "center",
@@ -222,12 +198,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
 
     shadowColor: "#9B7BFF",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 5,
+  },
+
+  favoritePoster: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 20,
   },
 
   plusContainer: {

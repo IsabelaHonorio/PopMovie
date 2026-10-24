@@ -7,25 +7,79 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
+  FlatList,
 } from 'react-native';
 
 import { Ionicons, Feather } from '@expo/vector-icons';
 
-export default function App() {
-  const [filmesFavoritos, setFilmesFavoritos] = useState([
-    { id: '1', imagem: require('./assets/filme01.png') },
-    { id: '2', imagem: require('./assets/filme02.png') },
-    { id: '3', imagem: require('./assets/filme03.png') },
-    { id: '4', imagem: require('./assets/filme04.png') },
-  ]);
+import AlterarSenha from './alterar_senha';
+import Bloqueados from './bloqueados';
+import AlterarAvatar from './alterar_avatar';
+import AlterarTema from './Alterar_tema';
 
-  // Remove o filme selecionado dos favoritos
+const favoritosIniciais = [
+  { id: '1', imagem: 'https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg' },
+  { id: '2', imagem: 'https://image.tmdb.org/t/p/w200/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg' },
+  { id: '3', imagem: 'https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg' },
+  { id: '4', imagem: 'https://image.tmdb.org/t/p/w200/7fn624j5lj3xTme2SgiLCeuedmO.jpg' },
+];
+
+export default function PerfilScreen({ navigation, route }) {
+  const { apelido, senha } = route.params || {};
+  const [telaAtual, setTelaAtual] = useState('Perfil');
+
+  const [filmesFavoritos, setFilmesFavoritos] = useState(favoritosIniciais);
+
+  const [fotoPerfil, setFotoPerfil] = useState(
+    require('./assets/avatar/6.png')
+  );
+
   function desfavoritar(id) {
     setFilmesFavoritos((anteriores) =>
       anteriores.filter((filme) => filme.id !== id)
     );
   }
 
+  // CONEXÃO COM AS OUTRAS TELAS
+  if (telaAtual === 'AlterarSenha') {
+    return (
+      <AlterarSenha
+        voltar={() => setTelaAtual('Perfil')}
+      />
+    );
+  }
+
+  if (telaAtual === 'Bloqueados') {
+    return (
+      <Bloqueados
+        navigation={navigation}
+        route={route}
+        voltar={() => setTelaAtual('Perfil')}
+      />
+    );
+  }
+
+  if (telaAtual === 'AlterarAvatar') {
+    return (
+      <AlterarAvatar
+        voltar={() => setTelaAtual('Perfil')}
+        fotoPerfil={fotoPerfil}
+        setFotoPerfil={setFotoPerfil}
+      />
+    );
+  }
+
+  if (telaAtual === 'AlterarTema') {
+    return (
+      <AlterarTema
+        navigation={navigation}
+        route={route}
+        voltar={() => setTelaAtual('Perfil')}
+      />
+    );
+  }
+
+  // TELA DE PERFIL
   return (
     <View style={estilos.conteiner}>
       <StatusBar
@@ -33,11 +87,12 @@ export default function App() {
         backgroundColor="#000000"
       />
 
-      {/* Cabeçalho */}
+      {/* CABEÇALHO */}
       <View style={estilos.cabecalho}>
         <TouchableOpacity
           style={estilos.botaoVoltar}
           activeOpacity={0.7}
+          onPress={() => navigation.navigate('Principal', { apelido, senha })}
         >
           <Ionicons
             name="chevron-back"
@@ -56,33 +111,46 @@ export default function App() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={estilos.conteudoRolagem}
       >
-        {/* Seção do Perfil */}
+        {/* PERFIL DO PEDRO */}
         <View style={estilos.secaoPerfil}>
           <Image
-            source={require('./assets/6.png')}
+            source={fotoPerfil}
             style={estilos.fotoPerfil}
           />
 
           <View style={estilos.infoPerfil}>
             <Text style={estilos.saudacao}>
-              Olá, Pedro!
+              Olá, {apelido || 'Pedro'}!
             </Text>
 
-            <Feather
-              name="edit-2"
-              size={16}
-              color="#a855f7"
+            {/* LÁPIS PARA ALTERAR AVATAR */}
+            <TouchableOpacity
+              onPress={() => setTelaAtual('AlterarAvatar')}
+              activeOpacity={0.7}
               style={estilos.iconeMargem}
-            />
+            >
+              <Feather
+                name="edit-2"
+                size={18}
+                color="#a855f7"
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Opções de configuração */}
+        {/* OPÇÕES DE CONFIGURAÇÃO */}
         <View style={estilos.listaOpcoes}>
-          <TouchableOpacity style={estilos.itemOpcao}>
+
+          {/* ALTERAR SENHA */}
+          <TouchableOpacity
+            style={estilos.itemOpcao}
+            activeOpacity={0.7}
+            onPress={() => setTelaAtual('AlterarSenha')}
+          >
             <Text style={estilos.textoOpcao}>
               Alterar senha
             </Text>
+
             <Feather
               name="edit-2"
               size={16}
@@ -90,10 +158,16 @@ export default function App() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={estilos.itemOpcao}>
+          {/* ALTERAR TEMA */}
+          <TouchableOpacity
+            style={estilos.itemOpcao}
+            activeOpacity={0.7}
+            onPress={() => setTelaAtual('AlterarTema')}
+          >
             <Text style={estilos.textoOpcao}>
               Alterar tema
             </Text>
+
             <Feather
               name="edit-2"
               size={16}
@@ -101,42 +175,52 @@ export default function App() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={estilos.itemOpcao}>
+          {/* CONTEÚDOS BLOQUEADOS */}
+          <TouchableOpacity
+            style={estilos.itemOpcao}
+            activeOpacity={0.7}
+            onPress={() => setTelaAtual('Bloqueados')}
+          >
             <Text style={estilos.textoOpcao}>
               Conteúdos bloqueados
             </Text>
+
             <Feather
               name="edit-2"
               size={16}
               color="#a855f7"
             />
           </TouchableOpacity>
+
         </View>
 
-        {/* Título Favoritos */}
+        {/* FAVORITOS */}
         <Text style={estilos.tituloSecao}>
           Favoritos
         </Text>
 
-        {/* Grade de filmes favoritos */}
-        <View style={estilos.gradeFilmes}>
-          {filmesFavoritos.map((filme) => (
-            <View
-              key={filme.id}
-              style={estilos.cartaoFilme}
-            >
-             
-              
-                <Image
-                  source={filme.imagem}
-                  style={estilos.posterFilme}
-                />
-         
+        <FlatList
+          data={filmesFavoritos}
+          keyExtractor={(item) => item.id}
+          numColumns={3}
+          columnWrapperStyle={estilos.columnWrapper}
+          contentContainerStyle={estilos.listaFilmes}
+          scrollEnabled={false}
+          ListEmptyComponent={
+            <Text style={estilos.mensagemVazia}>
+              Você ainda não tem filmes favoritos.
+            </Text>
+          }
+          renderItem={({ item }) => (
+            <View style={estilos.cartaoFilme}>
+              <Image
+                source={{ uri: item.imagem }}
+                style={estilos.posterFilme}
+              />
 
-              {/* Clicar no coração também remove */}
               <TouchableOpacity
                 style={estilos.botaoFavorito}
-                onPress={() => desfavoritar(filme.id)}
+                onPress={() => desfavoritar(item.id)}
                 activeOpacity={0.7}
               >
                 <Ionicons
@@ -146,20 +230,17 @@ export default function App() {
                 />
               </TouchableOpacity>
             </View>
-          ))}
-        </View>
-
-        {/* Mensagem quando não houver favoritos */}
-        {filmesFavoritos.length === 0 && (
-          <Text style={estilos.mensagemVazia}>
-            Você ainda não tem filmes favoritos.
-          </Text>
-        )}
+          )}
+        />
       </ScrollView>
 
-      {/* Barra de navegação inferior */}
+      {/* BARRA INFERIOR */}
       <View style={estilos.barraNavegacao}>
-        <TouchableOpacity style={estilos.itemNav}>
+        <TouchableOpacity
+          style={estilos.itemNav}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('Principal', { apelido, senha })}
+        >
           <Ionicons
             name="home-outline"
             size={24}
@@ -167,7 +248,11 @@ export default function App() {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={estilos.itemNav}>
+        <TouchableOpacity
+          style={estilos.itemNav}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('MinhaLista', { apelido, senha })}
+        >
           <Ionicons
             name="list-outline"
             size={24}
@@ -175,7 +260,11 @@ export default function App() {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={estilos.itemNav}>
+        <TouchableOpacity
+          style={estilos.itemNav}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('ConteudosAvaliados', { apelido, senha })}
+        >
           <Feather
             name="check"
             size={24}
@@ -183,7 +272,11 @@ export default function App() {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={estilos.itemNav}>
+        <TouchableOpacity
+          style={estilos.itemNav}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('Perfil', { apelido, senha })}
+        >
           <Ionicons
             name="person-outline"
             size={24}
@@ -255,6 +348,7 @@ const estilos = StyleSheet.create({
 
   iconeMargem: {
     marginLeft: 4,
+    padding: 5,
   },
 
   listaOpcoes: {
@@ -281,15 +375,18 @@ const estilos = StyleSheet.create({
     marginBottom: 16,
   },
 
-  gradeFilmes: {
-    flexDirection: 'row',
+  listaFilmes: {
+    paddingBottom: 10,
+  },
+
+  columnWrapper: {
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
+    marginBottom: 16,
   },
 
   cartaoFilme: {
     width: '31%',
-    marginBottom: 16,
+    marginBottom: 8,
   },
 
   posterFilme: {
@@ -330,8 +427,8 @@ const estilos = StyleSheet.create({
 
   imagem: {
     width: 180,
-    height: 140,
+    height: 100,
     resizeMode: 'contain',
-    marginTop: -30,
+    marginTop: -10,
   },
 });

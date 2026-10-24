@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -8,6 +7,7 @@ import {
   StyleSheet,
   StatusBar,
 } from 'react-native';
+import { COLORS, commonStyles } from './theme';
 
 const generos = [
   'Todos', 'Ação', 'Aventura',
@@ -40,7 +40,6 @@ function FiltroCard({
   opcoes,
   selecionados,
   onSelecionar,
-  tipo = 'multi',
 }) {
   return (
     <View style={styles.card}>
@@ -58,18 +57,12 @@ function FiltroCard({
             <Pressable
               key={opcao}
               onPress={() => onSelecionar(opcao)}
-              style={[
-                styles.option,
-                ativo && styles.optionActive,
-              ]}
+              style={[styles.option, ativo && styles.optionActive]}
               accessibilityRole="button"
               accessibilityState={{ selected: ativo }}
             >
               <Text
-                style={[
-                  styles.optionText,
-                  ativo && styles.optionTextActive,
-                ]}
+                style={[styles.optionText, ativo && styles.optionTextActive]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
@@ -83,18 +76,14 @@ function FiltroCard({
   );
 }
 
-export default function FiltrosScreen() {
-  const [generosSelecionados, setGenerosSelecionados] =
-    useState(['Todos']);
+export default function FiltrosScreen({ navigation, route }) {
+  const { apelido, senha } = route.params || {};
+  const voltarParaPrincipal = () => navigation.navigate('Principal', { apelido, senha });
 
-  const [duracaoSelecionada, setDuracaoSelecionada] =
-    useState(['Qualquer duração']);
-
-  const [plataformasSelecionadas, setPlataformasSelecionadas] =
-    useState(['Todos']);
-
-  const [anosSelecionados, setAnosSelecionados] =
-    useState(['Todos']);
+  const [generosSelecionados, setGenerosSelecionados] = useState(['Todos']);
+  const [duracaoSelecionada, setDuracaoSelecionada] = useState(['Qualquer duração']);
+  const [plataformasSelecionadas, setPlataformasSelecionadas] = useState(['Todos']);
+  const [anosSelecionados, setAnosSelecionados] = useState(['Todos']);
 
   function alternar(opcao, selecionados, setSelecionados, tipo = 'multi') {
     if (tipo === 'single') {
@@ -120,73 +109,51 @@ export default function FiltrosScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        backgroundColor="#000000"
-        barStyle="light-content"
-      />
+      <StatusBar backgroundColor="#000000" barStyle="light-content" />
 
       <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          accessibilityLabel="Voltar"
-        >
-          <Text style={styles.backArrow}>‹</Text>
+        <Pressable style={commonStyles.backButton} accessibilityLabel="Voltar" onPress={voltarParaPrincipal}>
+          <Text style={commonStyles.backArrow}>‹</Text>
         </Pressable>
 
         <Text style={styles.title}>Filtros</Text>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-      >
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={true}>
         <FiltroCard
           titulo="Gênero"
           subtitulo="Escolha um ou mais gêneros"
           opcoes={generos}
           selecionados={generosSelecionados}
-          onSelecionar={opcao =>
-            alternar(opcao, generosSelecionados, setGenerosSelecionados)
-          }
+          onSelecionar={opcao => alternar(opcao, generosSelecionados, setGenerosSelecionados)}
         />
 
         <FiltroCard
           titulo="Duração"
           opcoes={duracoes}
           selecionados={duracaoSelecionada}
-          onSelecionar={opcao =>
-            alternar(opcao, duracaoSelecionada, setDuracaoSelecionada, 'single')
-          }
-          tipo="single"
+          onSelecionar={opcao => alternar(opcao, duracaoSelecionada, setDuracaoSelecionada, 'single')}
         />
 
         <FiltroCard
           titulo="Plataforma de Streaming"
           opcoes={plataformas}
           selecionados={plataformasSelecionadas}
-          onSelecionar={opcao =>
-            alternar(opcao, plataformasSelecionadas, setPlataformasSelecionadas)
-          }
+          onSelecionar={opcao => alternar(opcao, plataformasSelecionadas, setPlataformasSelecionadas)}
         />
 
         <FiltroCard
           titulo="Ano de lançamento"
           opcoes={anos}
           selecionados={anosSelecionados}
-          onSelecionar={opcao =>
-            alternar(opcao, anosSelecionados, setAnosSelecionados)
-          }
+          onSelecionar={opcao => alternar(opcao, anosSelecionados, setAnosSelecionados)}
         />
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
       <View style={styles.footer}>
-        <Pressable
-          style={styles.applyButton}
-          onPress={() => {}}
-        >
+        <Pressable style={styles.applyButton} onPress={voltarParaPrincipal}>
           <Text style={styles.applyText}>Aplicar Filtros</Text>
         </Pressable>
       </View>
@@ -197,7 +164,7 @@ export default function FiltrosScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background,
   },
 
   header: {
@@ -206,26 +173,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  backButton: {
-    position: 'absolute',
-    left: 40,
-    top: 26,
-    zIndex: 1,
-    width: 32,
-    height: 40,
-    justifyContent: 'center',
-  },
-
-  backArrow: {
-    color: '#963BFF',
-    fontSize: 48,
-    lineHeight: 48,
-    marginTop: -7,
-  },
-
   title: {
-    color: '#FFFFFF',
-    fontSize: 46,
+    color: COLORS.text,
+    fontSize: 42,
     fontWeight: '700',
   },
 
@@ -241,7 +191,7 @@ const styles = StyleSheet.create({
 
   card: {
     borderWidth: 1,
-    borderColor: '#C800FF',
+    borderColor: COLORS.primary,
     borderRadius: 22,
     backgroundColor: '#080008',
     paddingHorizontal: 11,
@@ -251,14 +201,14 @@ const styles = StyleSheet.create({
   },
 
   cardTitle: {
-    color: '#FFFFFF',
+    color: COLORS.text,
     fontSize: 24,
     fontWeight: '600',
     textAlign: 'center',
   },
 
   subtitle: {
-    color: '#FFFFFF',
+    color: COLORS.textSoft,
     fontSize: 16,
     marginLeft: 41,
     marginTop: 1,
@@ -278,25 +228,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#963BFF',
+    borderColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background,
     flexGrow: 1,
   },
 
   optionActive: {
-    backgroundColor: '#963BFF',
+    backgroundColor: COLORS.primary,
   },
 
   optionText: {
-    color: '#FFFFFF',
+    color: COLORS.text,
     fontSize: 16,
     fontWeight: '600',
   },
 
   optionTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
 
   footer: {
@@ -305,28 +255,28 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 105,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   applyButton: {
-    backgroundColor: '#963BFF',
+    backgroundColor: COLORS.primary,
     borderRadius: 40,
     paddingHorizontal: 12,
     minHeight: 64,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 8,
-    shadowColor: '#963BFF',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 12,
   },
 
   applyText: {
-    color: '#FFFFFF',
-    fontSize: 36,
+    color: COLORS.white,
+    fontSize: 30,
     fontWeight: '600',
   },
 });

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   SafeAreaView,
@@ -47,7 +46,8 @@ const MOVIES = [
   },
 ];
 
-export default function App() {
+export default function BuscaSemBarra({ navigation, route }) {
+  const { slotIndex } = route.params || {};
   const [search, setSearch] = useState("");
   const [favorites, setFavorites] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState("3");
@@ -55,6 +55,13 @@ export default function App() {
   const filteredMovies = MOVIES.filter((movie) =>
     movie.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  const selecionarFilme = (movie) => {
+    navigation.navigate('CadastroFavoritos', {
+      selectedMovie: movie,
+      slotIndex,
+    });
+  };
 
   const toggleFavorite = (id) => {
     setFavorites((current) =>
@@ -78,6 +85,7 @@ export default function App() {
             style={styles.backButton}
             activeOpacity={0.7}
             accessibilityLabel="Voltar"
+            onPress={() => navigation.goBack()}
           >
             <Text style={styles.backArrow}>‹</Text>
           </TouchableOpacity>
@@ -118,7 +126,12 @@ export default function App() {
             const isFeatured = featuredMovie === movie.id;
 
             return (
-              <View key={movie.id} style={styles.movieCard}>
+              <TouchableOpacity
+                key={movie.id}
+                style={styles.movieCard}
+                activeOpacity={0.85}
+                onPress={() => selecionarFilme(movie)}
+              >
                 <Image
                   source={{ uri: movie.poster }}
                   style={styles.poster}
@@ -151,11 +164,7 @@ export default function App() {
                       styles.featureButton,
                       !isFeatured && styles.featureButtonHidden,
                     ]}
-                    onPress={() =>
-                      setFeaturedMovie(
-                        isFeatured ? null : movie.id
-                      )
-                    }
+                    onPress={() => setFeaturedMovie(isFeatured ? null : movie.id)}
                     activeOpacity={0.7}
                     accessibilityLabel="Destacar filme"
                   >
@@ -169,9 +178,7 @@ export default function App() {
                     onPress={() => toggleFavorite(movie.id)}
                     activeOpacity={0.7}
                     accessibilityLabel={
-                      isFavorite
-                        ? "Remover dos favoritos"
-                        : "Adicionar aos favoritos"
+                      isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"
                     }
                   >
                     <Text
@@ -184,7 +191,7 @@ export default function App() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })}
 
