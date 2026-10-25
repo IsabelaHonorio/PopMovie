@@ -107,6 +107,17 @@ export default function FiltrosScreen({ navigation, route }) {
     setSelecionados(novos.length ? novos : ['Todos']);
   }
 
+  const aplicarFiltros = () => {
+    const filtros = {
+      generos: generosSelecionados.includes('Todos') ? [] : generosSelecionados,
+      duracao: duracaoSelecionada[0] || 'Qualquer duração',
+      plataformas: plataformasSelecionadas.includes('Todos') ? [] : plataformasSelecionadas,
+      ano: anosSelecionados[0] || 'Todos',
+    };
+
+    navigation.navigate('ConteudoSorteado', { filtros });
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#000000" barStyle="light-content" />
@@ -146,14 +157,14 @@ export default function FiltrosScreen({ navigation, route }) {
           titulo="Ano de lançamento"
           opcoes={anos}
           selecionados={anosSelecionados}
-          onSelecionar={opcao => alternar(opcao, anosSelecionados, setAnosSelecionados)}
+          onSelecionar={opcao => alternar(opcao, anosSelecionados, setAnosSelecionados, 'single')}
         />
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
       <View style={styles.footer}>
-        <Pressable style={styles.applyButton} onPress={voltarParaPrincipal}>
+        <Pressable style={styles.applyButton} onPress={aplicarFiltros}>
           <Text style={styles.applyText}>Aplicar Filtros</Text>
         </Pressable>
       </View>

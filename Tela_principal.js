@@ -9,6 +9,7 @@ export default function TelaPrincipal({ navigation, route }) {
   const irParaConteudosAvaliados = () => navigation.navigate('ConteudosAvaliados', { apelido, senha });
   const irParaPerfil = () => navigation.navigate('Perfil', { apelido, senha });
   const irParaFiltros = () => navigation.navigate('Filtros', { apelido, senha });
+  const irParaSorteio = () => navigation.navigate('ConteudoSorteado');
 
   return (
     <View style={commonStyles.container}>
@@ -29,7 +30,7 @@ export default function TelaPrincipal({ navigation, route }) {
           style={styles.image}
         />
 
-        <TouchableOpacity style={[commonStyles.primaryButton, styles.botaoSortear]} activeOpacity={0.8}>
+        <TouchableOpacity style={[commonStyles.primaryButton, styles.botaoSortear]} activeOpacity={0.8} onPress={irParaSorteio}>
           <Text style={commonStyles.primaryButtonText}>Sortear</Text>
         </TouchableOpacity>
 

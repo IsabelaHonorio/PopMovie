@@ -7,6 +7,7 @@ import CadastroScreen from './cadastro';
 import CadastroFavoritosScreen from './cadastroFavoritos';
 import BuscaSemBarraScreen from './buscaSemBarra';
 import TelaPrincipal from './Tela_principal';
+import ConteudoSorteadoScreen from './Conteudo_sorteado';
 import MinhaListaScreen from './Minha_Lista';
 import ConteudosAvaliadosScreen from './Conteudos_avaliados';
 import PerfilScreen from './perfil';
@@ -29,6 +30,7 @@ export default function App() {
         <Stack.Screen name="CadastroFavoritos" component={CadastroFavoritosScreen} />
         <Stack.Screen name="BuscaSemBarra" component={BuscaSemBarraScreen} />
         <Stack.Screen name="Principal" component={TelaPrincipal} />
+        <Stack.Screen name="ConteudoSorteado" component={ConteudoSorteadoScreen} />
         <Stack.Screen name="MinhaLista" component={MinhaListaScreen} />
         <Stack.Screen name="ConteudosAvaliados" component={ConteudosAvaliadosScreen} />
         <Stack.Screen name="Perfil" component={PerfilScreen} />
