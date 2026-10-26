@@ -22,7 +22,7 @@ export default function TelaPrincipal({ navigation, route }) {
       <View style={styles.centralArea}>
         
 
-        <Text style={styles.title}>Olá {apelido || 'Pedro'}!</Text>
+        <Text style={styles.title}>Olá, {apelido || 'Pedro'}!</Text>
         <Text style={styles.text}>O que vamos assistir hoje?</Text>
 
         <Image
