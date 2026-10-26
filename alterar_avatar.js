@@ -90,7 +90,7 @@ export default function App() {
 
         {/* Opções */}
         <Text style={estilos.subtituloOpcoes}>
-          Escolha seu novo avatar
+          Escolha seu novo avatar:
         </Text>
 
         {/* Grade de avatares redondos */}
