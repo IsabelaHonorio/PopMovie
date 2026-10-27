@@ -1,8 +1,18 @@
-import { StyleSheet, Text, View, Image, Pressable, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  Pressable,
+  ActivityIndicator,
+  useWindowDimensions,
+} from 'react-native';
+
+import { Ionicons, Feather } from '@expo/vector-icons';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { COLORS } from './theme';
+import { getBlockedMovies } from './blockedStore';
 
 const API_KEY = '0d335050c2cc3308096c03300829a424';
 
@@ -24,132 +34,312 @@ const mapaGeneros = {
 export default function ConteudoSorteado() {
   const navigation = useNavigation();
   const route = useRoute();
+
+  const { height } = useWindowDimensions();
+
   const filtros = route.params?.filtros || {};
+  const apelido = route.params?.apelido;
+  const senha = route.params?.senha;
+  const filtrosKey = JSON.stringify(filtros);
+
   const [filme, setFilme] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
-  const [filmesJaMostrados, setFilmesJaMostrados] = useState([]);
+  const solicitacaoRef = useRef(0);
+  const sorteioRef = useRef({
+    filtrosKey: '',
+    filmesJaMostrados: new Set(),
+    paginasVisitadas: new Set(),
+    totalPaginas: 0,
+    primeiraPagina: null,
+  });
 
   const voltar = () => navigation.goBack();
 
+  const navegar = (tela) => {
+    navigation.navigate(tela, { apelido, senha });
+  };
+
   useEffect(() => {
-    setFilmesJaMostrados([]);
+    sorteioRef.current = {
+      filtrosKey,
+      filmesJaMostrados: new Set(),
+      paginasVisitadas: new Set(),
+      totalPaginas: 0,
+      primeiraPagina: null,
+    };
     setFilme(null);
     setErro('');
-  }, [route.params?.filtros]);
+  }, [filtrosKey]);
 
   const buscarFilmeAleatorio = async () => {
+    const solicitacao = solicitacaoRef.current + 1;
+    solicitacaoRef.current = solicitacao;
+
     try {
       setCarregando(true);
       setErro('');
 
-      const params = new URLSearchParams({
-        api_key: API_KEY,
-        language: 'pt-BR',
-        sort_by: 'popularity.desc',
-      });
-
-      if (filtros.generos && filtros.generos.length > 0) {
-        params.append('with_genres', filtros.generos.map(g => mapaGeneros[g]).join('|'));
+      let sorteio = sorteioRef.current;
+      if (sorteio.filtrosKey !== filtrosKey) {
+        sorteio = {
+          filtrosKey,
+          filmesJaMostrados: new Set(),
+          paginasVisitadas: new Set(),
+          totalPaginas: 0,
+          primeiraPagina: null,
+        };
+        sorteioRef.current = sorteio;
       }
 
-      if (filtros.ano && filtros.ano !== 'Todos') {
-        if (filtros.ano === 'Antes de 2000') {
-          params.append('primary_release_date.lte', '1999-12-31');
-        } else if (filtros.ano === '2025+') {
-          params.append('primary_release_date.gte', '2025-01-01');
-        } else {
-          const [inicio, fim] = filtros.ano.split(' - ');
-          if (inicio && fim) {
-            params.append('primary_release_date.gte', `${inicio}-01-01`);
-            params.append('primary_release_date.lte', `${fim}-12-31`);
+      const carregarPagina = async (pagina) => {
+        const params = new URLSearchParams({
+          api_key: API_KEY,
+          language: 'pt-BR',
+          sort_by: 'popularity.desc',
+          page: String(pagina),
+        });
+
+        if (filtros.generos && filtros.generos.length > 0) {
+          params.append(
+            'with_genres',
+            filtros.generos.map(g => mapaGeneros[g]).join('|')
+          );
+        }
+
+        if (filtros.ano && filtros.ano !== 'Todos') {
+          if (filtros.ano === 'Antes de 2000') {
+            params.append('primary_release_date.lte', '1999-12-31');
+          } else if (filtros.ano === '2025+') {
+            params.append('primary_release_date.gte', '2025-01-01');
+          } else {
+            const [inicio, fim] = filtros.ano.split(' - ');
+
+            if (inicio && fim) {
+              params.append('primary_release_date.gte', `${inicio}-01-01`);
+              params.append('primary_release_date.lte', `${fim}-12-31`);
+            }
           }
+        }
+
+        if (filtros.duracao && filtros.duracao !== 'Qualquer duração') {
+          const regras = {
+            'Até 1h': { max: 60 },
+            '1h - 1h30': { min: 60, max: 90 },
+            '1h30 - 2h': { min: 90, max: 120 },
+            '2h - 2h30': { min: 120, max: 150 },
+            '2h30+': { min: 150 },
+          };
+
+          const regra = regras[filtros.duracao];
+
+          if (regra?.min) {
+            params.append('with_runtime.gte', String(regra.min));
+          }
+
+          if (regra?.max) {
+            params.append('with_runtime.lte', String(regra.max));
+          }
+        }
+
+        const response = await fetch(
+          `https://api.themoviedb.org/3/discover/movie?${params.toString()}`
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error('Não foi possível buscar filmes com esses filtros.');
+        }
+
+        return data;
+      };
+
+      if (!sorteio.totalPaginas) {
+        const data = await carregarPagina(1);
+        sorteio.totalPaginas = Math.min(data.total_pages || 1, 500);
+        sorteio.primeiraPagina = data;
+      }
+
+      const bloqueados = new Set(
+        getBlockedMovies().map((item) => String(item.id))
+      );
+      const repetidosDisponiveis = [];
+      let filmeAleatorio = null;
+      const maxTentativas = Math.min(sorteio.totalPaginas, 10);
+
+      for (let tentativa = 0; tentativa < maxTentativas; tentativa += 1) {
+        let paginasDisponiveis = Array.from(
+          { length: sorteio.totalPaginas },
+          (_, index) => index + 1
+        ).filter((pagina) => !sorteio.paginasVisitadas.has(pagina));
+
+        if (paginasDisponiveis.length === 0) {
+          sorteio.paginasVisitadas.clear();
+          paginasDisponiveis = Array.from(
+            { length: sorteio.totalPaginas },
+            (_, index) => index + 1
+          );
+        }
+
+        const indicePagina = Math.floor(Math.random() * paginasDisponiveis.length);
+        const pagina = paginasDisponiveis[indicePagina];
+        sorteio.paginasVisitadas.add(pagina);
+
+        const data = pagina === 1 && sorteio.primeiraPagina
+          ? sorteio.primeiraPagina
+          : await carregarPagina(pagina);
+        const candidatos = (data.results || []).filter(
+          (item) => item.id && !bloqueados.has(String(item.id))
+        );
+
+        repetidosDisponiveis.push(
+          ...candidatos.filter((item) =>
+            sorteio.filmesJaMostrados.has(String(item.id))
+          )
+        );
+
+        const filmesNovos = candidatos.filter(
+          (item) => !sorteio.filmesJaMostrados.has(String(item.id))
+        );
+
+        if (filmesNovos.length > 0) {
+          filmeAleatorio =
+            filmesNovos[Math.floor(Math.random() * filmesNovos.length)];
+          break;
         }
       }
 
-      if (filtros.duracao && filtros.duracao !== 'Qualquer duração') {
-        const regras = {
-          'Até 1h': { max: 60 },
-          '1h - 1h30': { min: 60, max: 90 },
-          '1h30 - 2h': { min: 90, max: 120 },
-          '2h - 2h30': { min: 120, max: 150 },
-          '2h30+': { min: 150 },
-        };
-
-        const regra = regras[filtros.duracao];
-        if (regra?.min) params.append('with_runtime.gte', String(regra.min));
-        if (regra?.max) params.append('with_runtime.lte', String(regra.max));
+      if (!filmeAleatorio && repetidosDisponiveis.length > 0) {
+        sorteio.filmesJaMostrados.clear();
+        filmeAleatorio =
+          repetidosDisponiveis[
+            Math.floor(Math.random() * repetidosDisponiveis.length)
+          ];
       }
 
-      const response = await fetch(
-        `https://api.themoviedb.org/3/discover/movie?${params.toString()}`
-      );
-
-      const data = await response.json();
-
-      if (!data.results || data.results.length === 0) {
-        throw new Error('Nenhum filme encontrado com esses filtros.');
+      if (!filmeAleatorio) {
+        throw new Error(
+          'Não encontramos filmes disponíveis com esses filtros. Tente novamente ou ajuste os filtros.'
+        );
       }
-
-      const filmesDisponiveis = data.results.filter(
-        item => !filmesJaMostrados.includes(item.id)
-      );
-
-      if (filmesDisponiveis.length === 0) {
-        throw new Error('Não há mais filmes novos para esses filtros nesta sessão.');
-      }
-
-      const filmeAleatorio = filmesDisponiveis[Math.floor(Math.random() * filmesDisponiveis.length)];
 
       const detalhesResponse = await fetch(
         `https://api.themoviedb.org/3/movie/${filmeAleatorio.id}?api_key=${API_KEY}&language=pt-BR`
       );
 
       const detalhes = await detalhesResponse.json();
+
+      if (!detalhesResponse.ok) {
+        throw new Error('Não foi possível carregar os detalhes do filme.');
+      }
+
+      if (solicitacao !== solicitacaoRef.current) {
+        return;
+      }
+
       setFilme(detalhes);
-      setFilmesJaMostrados(prev => [...prev, filmeAleatorio.id]);
+      sorteio.filmesJaMostrados.add(String(filmeAleatorio.id));
     } catch (error) {
+      if (solicitacao !== solicitacaoRef.current) {
+        return;
+      }
+
       console.error(error);
-      setErro('Não foi possível carregar um filme com esses filtros. Tente outra combinação.');
+
+      setErro(
+        error.message ||
+          'Não foi possível carregar um filme com esses filtros. Tente novamente.'
+      );
     } finally {
-      setCarregando(false);
+      if (solicitacao === solicitacaoRef.current) {
+        setCarregando(false);
+      }
     }
   };
 
   useEffect(() => {
     buscarFilmeAleatorio();
-  }, [route.params?.filtros]);
+  }, [filtrosKey]);
 
   const poster = filme?.poster_path
     ? `https://image.tmdb.org/t/p/w500${filme.poster_path}`
     : null;
 
+  // Ajusta o pôster para caber na tela junto com o título e o botão.
+  const alturaPoster = Math.min(
+    height * 0.53,
+    500
+  );
+
   return (
     <View style={styles.container}>
-      <Pressable style={styles.botaoVoltar} onPress={voltar}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.text} />
-        <Text style={styles.textoVoltar}>Voltar</Text>
+
+      {/* Seta de voltar */}
+      <Pressable
+        style={styles.botaoVoltar}
+        onPress={voltar}
+      >
+        <Ionicons
+          name="chevron-back"
+          size={42}
+          color={COLORS.primary}
+        />
       </Pressable>
 
-      <View style={styles.conteudo}>
-        <Image
-          style={styles.image}
-          source={require('./assets/PopMovielogo.png')}
-          resizeMode="contain"
-        />
+      {/* Logo no topo */}
+      <Image
+        style={styles.logo}
+        source={require('./assets/PopMovielogo.png')}
+        resizeMode="contain"
+      />
 
+      {/* Conteúdo do filme */}
+      <View style={styles.conteudo}>
         {carregando ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={styles.loadingText}>Sorteando filme...</Text>
+            <ActivityIndicator
+              size="large"
+              color={COLORS.primary}
+            />
+
+            <Text style={styles.loadingText}>
+              Sorteando filme...
+            </Text>
           </View>
         ) : erro ? (
           <View style={styles.loadingBox}>
-            <Text style={styles.erroText}>{erro}</Text>
+            <Text style={styles.erroText}>
+              {erro}
+            </Text>
+
+            <Pressable
+              style={styles.botaoTentar}
+              onPress={buscarFilmeAleatorio}
+            >
+              <Text style={styles.textoBotaoTentar}>
+                Tentar novamente
+              </Text>
+            </Pressable>
           </View>
         ) : (
-          <>
-            <View style={styles.containerPoster}>
+          <Pressable
+            style={styles.filmeClicavel}
+            onPress={() => {
+              navigation.navigate('DetalhesFilme', {
+                filme: filme,
+                idFilme: filme.id,
+                apelido: apelido,
+                senha: senha,
+              });
+            }}
+          >
+            {/* Pôster */}
+            <View
+              style={[
+                styles.containerPoster,
+                { height: alturaPoster },
+              ]}
+            >
               {poster ? (
                 <Image
                   style={styles.poster}
@@ -158,31 +348,104 @@ export default function ConteudoSorteado() {
                 />
               ) : (
                 <View style={styles.posterFallback}>
-                  <Text style={styles.posterFallbackText}>Sem poster</Text>
+                  <Ionicons
+                    name="film-outline"
+                    size={55}
+                    color={COLORS.primary}
+                  />
+
+                  <Text style={styles.posterFallbackText}>
+                    Sem pôster disponível
+                  </Text>
                 </View>
               )}
             </View>
 
-            <Text style={styles.title}>{filme.title}</Text>
-            <Text style={styles.subtitle}>
-              {filme.release_date ? filme.release_date.slice(0, 4) : 'Sem ano'}
-              {' · '}
-              {filme.runtime ? `${filme.runtime} min` : 'Sem duração'}
+            {/* Nome do filme */}
+            <Text
+              style={styles.title}
+              numberOfLines={2}
+            >
+              {filme.title}
             </Text>
-
-            <Text style={styles.overview} numberOfLines={5}>
-              {filme.overview || 'Descrição indisponível para este filme.'}
-            </Text>
-
-            <Text style={styles.meta}>
-              Nota: {filme.vote_average ? filme.vote_average.toFixed(1) : 'N/A'}
-            </Text>
-          </>
+          </Pressable>
         )}
 
-        <Pressable style={styles.botaoSortear} onPress={buscarFilmeAleatorio}>
-          <Ionicons name="refresh" size={22} color="white" />
-          <Text style={styles.textoBotao}>Sortear novamente</Text>
+        {/* Botão de sortear novamente */}
+        {!erro && (
+          <Pressable
+            style={styles.botaoSortear}
+            onPress={buscarFilmeAleatorio}
+            disabled={carregando}
+          >
+            <Ionicons
+              name="refresh"
+              size={30}
+              color="white"
+            />
+
+            <Text style={styles.textoBotao}>
+              Sortear novamente
+            </Text>
+          </Pressable>
+        )}
+      </View>
+
+      {/* Barra inferior igual à tela Minha Lista */}
+      <View style={styles.barraNavegacao}>
+        <Pressable
+          style={styles.itemNav}
+          onPress={() => navegar('Principal')}
+        >
+          <Ionicons
+            name="home-outline"
+            size={29}
+            color={COLORS.primary}
+          />
+        </Pressable>
+
+        <Pressable
+          style={styles.itemNav}
+          onPress={() => navegar('Buscar')}
+        >
+          <Ionicons
+            name="search-outline"
+            size={29}
+            color={COLORS.primary}
+          />
+        </Pressable>
+
+        <Pressable
+          style={styles.itemNav}
+          onPress={() => navegar('MinhaLista')}
+        >
+          <Ionicons
+            name="list-outline"
+            size={29}
+            color={COLORS.primary}
+          />
+        </Pressable>
+
+        <Pressable
+          style={styles.itemNav}
+          onPress={() => navegar('ConteudosAvaliados')}
+        >
+          <Feather
+            name="check"
+            size={29}
+            color={COLORS.primary}
+          />
+        </Pressable>
+
+        <Pressable
+          style={styles.itemNav}
+          onPress={() => navegar('Perfil')}
+        >
+          <Ionicons
+            name="person-outline"
+            size={29}
+            color={COLORS.primary}
+          />
         </Pressable>
       </View>
     </View>
@@ -192,46 +455,42 @@ export default function ConteudoSorteado() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#000000',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    padding: 20,
   },
 
   botaoVoltar: {
     position: 'absolute',
-    top: 28,
-    left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    top: 55,
+    left: 28,
     zIndex: 2,
+    padding: 3,
   },
 
-  textoVoltar: {
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: '600',
+  logo: {
+    width: 250,
+    height: 105,
+    marginTop: 10,
+    marginBottom: 8,
   },
 
   conteudo: {
-    alignItems: 'center',
+    flex: 1,
     width: '100%',
-    marginTop: 32,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 70,
   },
 
-  image: {
-    width: 200,
-    height: 100,
+  filmeClicavel: {
+    width: '100%',
+    alignItems: 'center',
   },
 
   containerPoster: {
-    width: 280,
-    height: 380,
-    borderRadius: 22,
+    width: '92%',
+    borderRadius: 23,
     overflow: 'hidden',
-    alignSelf: 'center',
-    marginTop: 12,
     backgroundColor: '#1b1b1b',
   },
 
@@ -242,80 +501,96 @@ const styles = StyleSheet.create({
 
   posterFallback: {
     flex: 1,
-    backgroundColor: '#1b1b1b',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 10,
   },
 
   posterFallbackText: {
     color: COLORS.text,
-    fontSize: 18,
+    fontSize: 16,
   },
 
   title: {
-    color: COLORS.text,
-    fontSize: 28,
+    color: 'white',
+    fontSize: 32,
     textAlign: 'center',
-    marginTop: 18,
-    fontWeight: '700',
-  },
-
-  subtitle: {
-    color: '#d3d3d3',
-    fontSize: 14,
-    marginTop: 4,
-  },
-
-  overview: {
-    color: COLORS.text,
-    fontSize: 15,
-    textAlign: 'center',
-    marginTop: 12,
-    lineHeight: 22,
-    paddingHorizontal: 8,
-  },
-
-  meta: {
-    color: '#f0dfff',
-    fontSize: 15,
-    marginTop: 10,
-    fontWeight: '600',
+    marginTop: 15,
+    fontWeight: '400',
+    paddingHorizontal: 5,
   },
 
   botaoSortear: {
+    position: 'absolute',
+    bottom: 15,
     backgroundColor: COLORS.primary,
-    width: '90%',
-    padding: 12,
-    borderRadius: 40,
+    width: '92%',
+    minHeight: 65,
+    paddingVertical: 12,
+    borderRadius: 45,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 26,
+    gap: 12,
+    elevation: 8,
   },
 
   textoBotao: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 21,
+    fontWeight: '600',
+  },
+
+  botaoTentar: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 30,
+    marginTop: 20,
+  },
+
+  textoBotaoTentar: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 
   loadingBox: {
-    marginTop: 30,
+    flex: 1,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 200,
+    paddingHorizontal: 25,
   },
 
   loadingText: {
     color: COLORS.text,
-    marginTop: 12,
-    fontSize: 16,
+    marginTop: 15,
+    fontSize: 17,
   },
 
   erroText: {
     color: '#ffb4b4',
-    fontSize: 15,
+    fontSize: 16,
     textAlign: 'center',
-    paddingHorizontal: 20,
+  },
+
+  // Mesmas configurações da barra inferior de MinhaLista.
+  barraNavegacao: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#1e1e1e',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    height: 60,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+
+  itemNav: {
+    padding: 10,
   },
 });

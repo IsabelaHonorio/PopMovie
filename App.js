@@ -8,6 +8,7 @@ import CadastroFavoritosScreen from './cadastroFavoritos';
 import BuscaSemBarraScreen from './buscaSemBarra';
 import TelaPrincipal from './Tela_principal';
 import ConteudoSorteadoScreen from './Conteudo_sorteado';
+import DetalhesFilme from './DetalhesFilmes';
 import MinhaListaScreen from './Minha_Lista';
 import ConteudosAvaliadosScreen from './Conteudos_avaliados';
 import PerfilScreen from './perfil';
@@ -27,12 +28,28 @@ export default function App() {
         <Stack.Screen name="Inicio" component={TelaInicial} />
         <Stack.Screen name="Login" component={TelaLogin} />
         <Stack.Screen name="Cadastro" component={CadastroScreen} />
-        <Stack.Screen name="CadastroFavoritos" component={CadastroFavoritosScreen} />
-        <Stack.Screen name="BuscaSemBarra" component={BuscaSemBarraScreen} />
+        <Stack.Screen
+          name="CadastroFavoritos"
+          component={CadastroFavoritosScreen}
+        />
+        <Stack.Screen
+          name="BuscaSemBarra"
+          component={BuscaSemBarraScreen}
+        />
         <Stack.Screen name="Principal" component={TelaPrincipal} />
-        <Stack.Screen name="ConteudoSorteado" component={ConteudoSorteadoScreen} />
+        <Stack.Screen
+          name="ConteudoSorteado"
+          component={ConteudoSorteadoScreen}
+        />
+        <Stack.Screen
+          name="DetalhesFilme"
+          component={DetalhesFilme}
+        />
         <Stack.Screen name="MinhaLista" component={MinhaListaScreen} />
-        <Stack.Screen name="ConteudosAvaliados" component={ConteudosAvaliadosScreen} />
+        <Stack.Screen
+          name="ConteudosAvaliados"
+          component={ConteudosAvaliadosScreen}
+        />
         <Stack.Screen name="Perfil" component={PerfilScreen} />
         <Stack.Screen name="Filtros" component={FiltrosScreen} />
       </Stack.Navigator>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,47 +10,25 @@ import {
 } from 'react-native';
 
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, commonStyles } from './theme';
-
-const filmes = [
-  {
-    id: '1',
-    titulo: 'Interestelar',
-    imagem: 'https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
-  },
-  {
-    id: '2',
-    titulo: 'Toy Story',
-    imagem: 'https://image.tmdb.org/t/p/w200/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg',
-  },
-  {
-    id: '3',
-    titulo: 'Parasita',
-    imagem: 'https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',
-  },
-  {
-    id: '4',
-    titulo: 'Whiplash',
-    imagem: 'https://image.tmdb.org/t/p/w200/7fn624j5lj3xTme2SgiLCeuedmO.jpg',
-  },
-  {
-    id: '5',
-    titulo: 'Oppenheimer',
-    imagem: 'https://image.tmdb.org/t/p/w200/8UlWHLMpgZm9bx6QYh0NFoq67TZ.jpg',
-  },
-  {
-    id: '6',
-    titulo: 'Duna',
-    imagem: 'https://image.tmdb.org/t/p/w200/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg',
-  },
-];
+import { getWatchlist } from './watchlistStore';
 
 export default function MinhaListaScreen({ navigation, route }) {
   const { apelido, senha } = route.params || {};
   const [search, setSearch] = useState('');
+  const [filmes, setFilmes] = useState(getWatchlist());
+
+  useFocusEffect(
+    useCallback(() => {
+      setFilmes(getWatchlist());
+    }, [])
+  );
 
   const filmesFiltrados = filmes.filter((filme) =>
-    filme.titulo.toLowerCase().includes(search.toLowerCase())
+    (filme.title || filme.original_title || filme.titulo || '')
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 
   return (
@@ -90,7 +68,7 @@ export default function MinhaListaScreen({ navigation, route }) {
       <FlatList
         style={styles.flatList}
         data={filmesFiltrados}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         numColumns={3}
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listaFilmes}
@@ -102,10 +80,26 @@ export default function MinhaListaScreen({ navigation, route }) {
           </Text>
         }
         renderItem={({ item }) => (
-          <Image
-            source={{ uri: item.imagem }}
-            style={styles.poster}
-          />
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() =>
+              navigation.navigate('DetalhesFilme', {
+                filme: item,
+                idFilme: item.id,
+                apelido,
+                senha,
+              })
+            }
+          >
+            <Image
+              source={{
+                uri: item.poster_path
+                  ? `https://image.tmdb.org/t/p/w200${item.poster_path}`
+                  : item.imagem,
+              }}
+              style={styles.poster}
+            />
+          </TouchableOpacity>
         )}
       />
 

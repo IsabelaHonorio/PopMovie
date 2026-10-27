@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,43 +9,19 @@ import {
 } from 'react-native';
 
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, commonStyles } from './theme';
-
-const filmes = [
-  {
-    id: '1',
-    titulo: 'Whiplash',
-    imagem: 'https://image.tmdb.org/t/p/w200/7fn624j5lj3xTme2SgiLCeuedmO.jpg',
-  },
-  {
-    id: '2',
-    titulo: 'Oppenheimer',
-    imagem: 'https://image.tmdb.org/t/p/w200/8UlWHLMpgZm9bx6QYh0NFoq67TZ.jpg',
-  },
-  {
-    id: '3',
-    titulo: 'Duna',
-    imagem: 'https://image.tmdb.org/t/p/w200/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg',
-  },
-  {
-    id: '4',
-    titulo: 'Interestelar',
-    imagem: 'https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
-  },
-  {
-    id: '5',
-    titulo: 'Toy Story',
-    imagem: 'https://image.tmdb.org/t/p/w200/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg',
-  },
-  {
-    id: '6',
-    titulo: 'Parasita',
-    imagem: 'https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',
-  },
-];
+import { getEvaluatedMovies } from './evaluatedStore';
 
 export default function ConteudosAvaliadosScreen({ navigation, route }) {
   const { apelido, senha } = route.params || {};
+  const [filmes, setFilmes] = useState(getEvaluatedMovies());
+
+  useFocusEffect(
+    useCallback(() => {
+      setFilmes(getEvaluatedMovies());
+    }, [])
+  );
 
   return (
     <View style={commonStyles.container}>
@@ -84,7 +60,7 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
       <FlatList
         style={styles.flatList}
         data={filmes}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         numColumns={3}
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listaFilmes}
@@ -95,10 +71,26 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
           </Text>
         }
         renderItem={({ item }) => (
-          <Image
-            source={{ uri: item.imagem }}
-            style={styles.poster}
-          />
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() =>
+              navigation.navigate('DetalhesFilme', {
+                filme: item,
+                idFilme: item.id,
+                apelido,
+                senha,
+              })
+            }
+          >
+            <Image
+              source={{
+                uri: item.poster_path
+                  ? `https://image.tmdb.org/t/p/w200${item.poster_path}`
+                  : item.imagem,
+              }}
+              style={styles.poster}
+            />
+          </TouchableOpacity>
         )}
       />
 

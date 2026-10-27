@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   StyleSheet,
@@ -12,15 +12,11 @@ import {
 } from 'react-native';
 
 import { Ionicons, Feather } from '@expo/vector-icons';
-
-const filmesIniciais = [
-  { id: '1', nome: 'Filme 1', imagem: 'https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', bloqueado: true },
-  { id: '2', nome: 'Filme 2', imagem: 'https://image.tmdb.org/t/p/w200/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg', bloqueado: true },
-  { id: '3', nome: 'Filme 3', imagem: 'https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg', bloqueado: true },
-  { id: '4', nome: 'Filme 4', imagem: 'https://image.tmdb.org/t/p/w200/7fn624j5lj3xTme2SgiLCeuedmO.jpg', bloqueado: true },
-  { id: '5', nome: 'Filme 5', imagem: 'https://image.tmdb.org/t/p/w200/8UlWHLMpgZm9bx6QYh0NFoq67TZ.jpg', bloqueado: true },
-  { id: '6', nome: 'Filme 6', imagem: 'https://image.tmdb.org/t/p/w200/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg', bloqueado: true },
-];
+import {
+  getBlockedMovies,
+  subscribeToBlockedMovies,
+  toggleMovieBlocked,
+} from './blockedStore';
 
 export default function BloqueadosScreen({ navigation, route, voltar }) {
   const { apelido, senha } = route?.params || {};
@@ -42,20 +38,14 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
   const irParaPerfil = () => navigation?.navigate('Perfil', { apelido, senha });
 
   const [pesquisa, setPesquisa] = useState('');
-  const [filmes, setFilmes] = useState(filmesIniciais);
+  const [filmes, setFilmes] = useState(getBlockedMovies());
 
-  const alternarBloqueio = (id) => {
-    setFilmes((anteriores) =>
-      anteriores.map((filme) =>
-        filme.id === id
-          ? { ...filme, bloqueado: !filme.bloqueado }
-          : filme
-      )
-    );
-  };
+  useEffect(() => subscribeToBlockedMovies(setFilmes), []);
 
   const filmesFiltrados = filmes.filter((filme) =>
-    filme.nome.toLowerCase().includes(pesquisa.toLowerCase())
+    (filme.title || filme.original_title || filme.nome || '')
+      .toLowerCase()
+      .includes(pesquisa.toLowerCase())
   );
 
   return (
@@ -115,21 +105,36 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
 
         <FlatList
           data={filmesFiltrados}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           numColumns={3}
           columnWrapperStyle={estilos.columnWrapper}
           contentContainerStyle={estilos.listaFilmes}
           scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={estilos.cartaoFilme}>
-              <View style={estilos.containerPoster}>
-                <Image
-                  source={{ uri: item.imagem }}
-                  style={estilos.posterFilme}
-                  resizeMode="cover"
-                />
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() =>
+                  navigation?.navigate('DetalhesFilme', {
+                    filme: item,
+                    idFilme: item.id,
+                    apelido,
+                    senha,
+                  })
+                }
+                accessibilityLabel={`Abrir detalhes de ${item.title || item.original_title || item.nome || 'filme'}`}
+              >
+                <View style={estilos.containerPoster}>
+                  <Image
+                    source={{
+                      uri: item.poster_path
+                        ? `https://image.tmdb.org/t/p/w200${item.poster_path}`
+                        : item.imagem,
+                    }}
+                    style={estilos.posterFilme}
+                    resizeMode="cover"
+                  />
 
-                {item.bloqueado && (
                   <View style={estilos.sobreposicaoBloqueio}>
                     <Ionicons
                       name="lock-closed"
@@ -137,18 +142,15 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
                       color="#a855f7"
                     />
                   </View>
-                )}
-              </View>
+                </View>
+              </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  estilos.botaoAcao,
-                  { backgroundColor: item.bloqueado ? '#a855f7' : '#22c55e' },
-                ]}
-                onPress={() => alternarBloqueio(item.id)}
+            <TouchableOpacity
+                style={[estilos.botaoAcao, { backgroundColor: '#22c55e' }]}
+                onPress={() => toggleMovieBlocked(item)}
               >
                 <Ionicons
-                  name={item.bloqueado ? 'lock-open-outline' : 'lock-closed-outline'}
+                  name="lock-open-outline"
                   size={18}
                   color="#000000"
                 />
@@ -322,4 +324,3 @@ const estilos = StyleSheet.create({
     padding: 10,
   },
 });
-

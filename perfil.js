@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -17,41 +17,23 @@ import AlterarSenha from './alterar_senha';
 import Bloqueados from './bloqueados';
 import AlterarAvatar from './alterar_avatar';
 import AlterarTema from './Alterar_tema';
-
-const favoritosIniciais = [
-  {
-    id: '1',
-    imagem: 'https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
-  },
-  {
-    id: '2',
-    imagem: 'https://image.tmdb.org/t/p/w200/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg',
-  },
-  {
-    id: '3',
-    imagem: 'https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',
-  },
-  {
-    id: '4',
-    imagem: 'https://image.tmdb.org/t/p/w200/7fn624j5lj3xTme2SgiLCeuedmO.jpg',
-  },
-];
+import {
+  getFavoriteMovies,
+  subscribeToFavoriteMovies,
+  toggleFavoriteMovie,
+} from './favoriteMoviesStore';
 
 export default function PerfilScreen({ navigation, route }) {
   const { apelido, senha } = route.params || {};
 
   const [telaAtual, setTelaAtual] = useState('Perfil');
-  const [filmesFavoritos, setFilmesFavoritos] = useState(favoritosIniciais);
+  const [filmesFavoritos, setFilmesFavoritos] = useState(getFavoriteMovies());
+
+  useEffect(() => subscribeToFavoriteMovies(setFilmesFavoritos), []);
 
   const [fotoPerfil, setFotoPerfil] = useState(
     require('./assets/avatar/6.png')
   );
-
-  function desfavoritar(id) {
-    setFilmesFavoritos((anteriores) =>
-      anteriores.filter((filme) => filme.id !== id)
-    );
-  }
 
   // CONEXÃO COM AS OUTRAS TELAS
   if (telaAtual === 'AlterarSenha') {
@@ -186,7 +168,7 @@ export default function PerfilScreen({ navigation, route }) {
 
         <FlatList
           data={filmesFavoritos}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           numColumns={3}
           columnWrapperStyle={estilos.columnWrapper}
           contentContainerStyle={estilos.listaFilmes}
@@ -198,15 +180,34 @@ export default function PerfilScreen({ navigation, route }) {
           }
           renderItem={({ item }) => (
             <View style={estilos.cartaoFilme}>
-              <Image
-                source={{ uri: item.imagem }}
-                style={estilos.posterFilme}
-              />
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() =>
+                  navigation.navigate('DetalhesFilme', {
+                    filme: item,
+                    idFilme: item.id,
+                    apelido,
+                    senha,
+                  })
+                }
+                accessibilityLabel={`Abrir detalhes de ${item.title || item.original_title || item.nome || 'filme'}`}
+              >
+                <Image
+                  source={{
+                    uri: item.poster_path
+                      ? `https://image.tmdb.org/t/p/w200${item.poster_path}`
+                      : item.imagem,
+                  }}
+                  style={estilos.posterFilme}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={estilos.botaoFavorito}
-                onPress={() => desfavoritar(item.id)}
+                onPress={() => toggleFavoriteMovie(item)}
                 activeOpacity={0.7}
+                accessibilityLabel={`Remover ${item.title || item.original_title || item.nome || 'filme'} dos favoritos`}
               >
                 <Ionicons
                   name="heart"
@@ -383,21 +384,21 @@ const estilos = StyleSheet.create({
 
   cartaoFilme: {
     width: 96,
-    marginBottom: 5,
+    height: 146,
+    marginBottom: 0,
+    position: 'relative',
   },
 
   posterFilme: {
-    width: '100%',
+    width: 96,
     height: 146,
     borderRadius: 10,
-    marginBottom: 8,
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    paddingHorizontal: 17,
-    gap: 10,
   },
 
   botaoFavorito: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
     backgroundColor: COLORS.primary,
     borderRadius: 8,
     height: 28,
