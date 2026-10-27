@@ -10,22 +10,20 @@ import {
 import { COLORS, commonStyles } from './theme';
 
 const generos = [
-  'Todos', 'Ação', 'Aventura',
-  'Animação', 'Comédia', 'Drama',
-  'Terror', 'Suspense', 'Fantasia',
-  'Ficção Científica', 'Romance',
-  'Crime', 'Documentário',
+  'Todos', 'Ação', 'Animação',
+  'Aventura', 'Comédia', 'Crime', 'Drama',
+  'Documentário', 'Fantasia', 'Ficção Científica',
+  'Romance', 'Suspense', 'Terror',
 ];
 
 const duracoes = [
   'Qualquer duração', 'Até 1h',
-  '1h - 1h30', '2h - 2h30',
-  '1h30 - 2h', '2h30+',
+  '1h - 1h30', '1h30 - 2h',
+  '2h - 2h30', '2h30+',
 ];
 
 const plataformas = [
-  'Todos', 'Netflix', 'Prime Video',
-  'Max', 'Disney+', 'Outra',
+  'Todos', 'Disney+', 'Max', 'Netflix', 'Prime Video', 'Outra',
 ];
 
 const anos = [

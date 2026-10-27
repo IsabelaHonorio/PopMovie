@@ -4,6 +4,7 @@ import {
   View,
   Image,
   Pressable,
+  ScrollView,
   ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
@@ -265,11 +266,7 @@ export default function ConteudoSorteado() {
     ? `https://image.tmdb.org/t/p/w500${filme.poster_path}`
     : null;
 
-  // Ajusta o pôster para caber na tela junto com o título e o botão.
-  const alturaPoster = Math.min(
-    height * 0.53,
-    500
-  );
+  const alturaPoster = Math.min(Math.max(height * 0.4, 220), 380);
 
   return (
     <View style={styles.container}>
@@ -322,53 +319,54 @@ export default function ConteudoSorteado() {
             </Pressable>
           </View>
         ) : (
-          <Pressable
-            style={styles.filmeClicavel}
-            onPress={() => {
-              navigation.navigate('DetalhesFilme', {
-                filme: filme,
-                idFilme: filme.id,
-                apelido: apelido,
-                senha: senha,
-              });
-            }}
+          <ScrollView
+            style={styles.filmeRolagem}
+            contentContainerStyle={styles.filmeRolagemConteudo}
+            showsVerticalScrollIndicator={false}
           >
-            {/* Pôster */}
-            <View
-              style={[
-                styles.containerPoster,
-                { height: alturaPoster },
-              ]}
+            <Pressable
+              style={styles.filmeClicavel}
+              onPress={() => {
+                navigation.navigate('DetalhesFilme', {
+                  filme: filme,
+                  idFilme: filme.id,
+                  apelido: apelido,
+                  senha: senha,
+                });
+              }}
             >
-              {poster ? (
-                <Image
-                  style={styles.poster}
-                  source={{ uri: poster }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.posterFallback}>
-                  <Ionicons
-                    name="film-outline"
-                    size={55}
-                    color={COLORS.primary}
+              <View
+                style={[
+                  styles.containerPoster,
+                  { height: alturaPoster },
+                ]}
+              >
+                {poster ? (
+                  <Image
+                    style={styles.poster}
+                    source={{ uri: poster }}
+                    resizeMode="cover"
                   />
+                ) : (
+                  <View style={styles.posterFallback}>
+                    <Ionicons
+                      name="film-outline"
+                      size={55}
+                      color={COLORS.primary}
+                    />
 
-                  <Text style={styles.posterFallbackText}>
-                    Sem pôster disponível
-                  </Text>
-                </View>
-              )}
-            </View>
+                    <Text style={styles.posterFallbackText}>
+                      Sem pôster disponível
+                    </Text>
+                  </View>
+                )}
+              </View>
 
-            {/* Nome do filme */}
-            <Text
-              style={styles.title}
-              numberOfLines={2}
-            >
-              {filme.title}
-            </Text>
-          </Pressable>
+              <Text style={styles.title}>
+                {filme.title || filme.original_title}
+              </Text>
+            </Pressable>
+          </ScrollView>
         )}
 
         {/* Botão de sortear novamente */}
@@ -472,6 +470,8 @@ const styles = StyleSheet.create({
     height: 105,
     marginTop: 10,
     marginBottom: 8,
+    flexShrink: 0,
+    alignSelf: 'center',
   },
 
   conteudo: {
@@ -479,12 +479,23 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 70,
+    paddingBottom: 75,
+  },
+
+  filmeRolagem: {
+    flex: 1,
+    width: '100%',
+  },
+
+  filmeRolagemConteudo: {
+    alignItems: 'center',
+    paddingBottom: 12,
   },
 
   filmeClicavel: {
     width: '100%',
     alignItems: 'center',
+    paddingTop: 4,
   },
 
   containerPoster: {
@@ -513,18 +524,16 @@ const styles = StyleSheet.create({
 
   title: {
     color: 'white',
-    fontSize: 32,
+    fontSize: 28,
     textAlign: 'center',
-    marginTop: 15,
+    marginTop: 12,
     fontWeight: '400',
     paddingHorizontal: 5,
   },
 
   botaoSortear: {
-    position: 'absolute',
-    bottom: 15,
     backgroundColor: COLORS.primary,
-    width: '92%',
+    width: '100%',
     minHeight: 65,
     paddingVertical: 12,
     borderRadius: 45,
@@ -533,6 +542,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     elevation: 8,
+    marginTop: 10,
+    marginBottom: 12,
+    flexShrink: 0,
   },
 
   textoBotao: {

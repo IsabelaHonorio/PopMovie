@@ -5,16 +5,18 @@ import {
   View,
   Image,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   ScrollView,
-  Alert,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 
-export default function App() {
-  // Avatares salvos na pasta assets
+export default function AlterarAvatar({
+  voltar,
+  fotoPerfil,
+  setFotoPerfil,
+  navigation,
+}) {
   const avatares = [
     { id: '10', imagem: require('./assets/avatar/10.png') },
     { id: '11', imagem: require('./assets/avatar/11.png') },
@@ -27,8 +29,26 @@ export default function App() {
     { id: '13', imagem: require('./assets/avatar/15.png') },
   ];
 
-  // Começa com o primeiro avatar selecionado
-  const [avatarSelecionado, setAvatarSelecionado] = useState(0);
+  const indiceAvatarAtual = avatares.findIndex(
+    (avatar) => avatar.imagem === fotoPerfil
+  );
+  const [avatarSelecionado, setAvatarSelecionado] = useState(
+    indiceAvatarAtual >= 0 ? indiceAvatarAtual : 0
+  );
+
+  const voltarParaPerfil = () => {
+    if (voltar) {
+      voltar();
+      return;
+    }
+
+    navigation?.goBack();
+  };
+
+  const confirmarAvatar = () => {
+    setFotoPerfil?.(avatares[avatarSelecionado].imagem);
+    voltarParaPerfil();
+  };
 
   return (
     <View style={estilos.conteiner}>
@@ -42,7 +62,8 @@ export default function App() {
         <TouchableOpacity
           style={estilos.botaoVoltar}
           activeOpacity={0.7}
-          onPress={() => Alert.alert('Voltar', 'Botão voltar pressionado!')}
+          onPress={voltarParaPerfil}
+          accessibilityLabel="Voltar ao perfil"
         >
           <Ionicons
             name="chevron-back"
@@ -129,12 +150,7 @@ export default function App() {
         <TouchableOpacity
           style={estilos.botaoConfirmar}
           activeOpacity={0.8}
-          onPress={() =>
-            Alert.alert(
-              'Sucesso!',
-              'Seu avatar foi selecionado!'
-            )
-          }
+          onPress={confirmarAvatar}
         >
           <Text style={estilos.textoBotaoConfirmar}>
             Confirmar
@@ -153,13 +169,16 @@ const estilos = StyleSheet.create({
   },
 
   cabecalho: {
-    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 20,
     marginBottom: 16,
+    position: 'relative',
   },
 
   botaoVoltar: {
+    position: 'absolute',
+    left: 20,
     width: 38,
     height: 38,
     backgroundColor: '#121215',
@@ -168,7 +187,7 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#222226',
-    marginRight: 16,
+    zIndex: 1,
   },
 
   logo: {
@@ -178,7 +197,7 @@ const estilos = StyleSheet.create({
 
   conteudoRolagem: {
     paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingBottom: 40,
     alignItems: 'center',
   },
 
@@ -192,14 +211,14 @@ const estilos = StyleSheet.create({
 
   descricao: {
     color: '#9ca3af',
-    fontSize: 13,
+    fontSize: 15,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
 
   secaoAvatarAtual: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
 
   molduraAvatarAtual: {
@@ -238,25 +257,24 @@ const estilos = StyleSheet.create({
 
   subtituloOpcoes: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '600',
     alignSelf: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 16,
   },
 
   gradeAvatares: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     width: '100%',
     marginBottom: 24,
   },
 
   itemAvatar: {
-    width: '22%',
+    width: '30%',
     aspectRatio: 1,
-    marginBottom: 18,
-    marginRight: '4%',
+    marginBottom: 16,
     borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
@@ -267,7 +285,6 @@ const estilos = StyleSheet.create({
     position: 'relative',
   },
 
-  // Remove a margem direita do quarto item de cada linha
   fotoAvatarOpcao: {
     width: '100%',
     height: '100%',
@@ -297,7 +314,7 @@ const estilos = StyleSheet.create({
   botaoConfirmar: {
     backgroundColor: '#9333ea',
     height: 52,
-    width: '85%',
+    width: '100%',
     borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',

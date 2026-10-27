@@ -105,7 +105,8 @@ export default function PerfilScreen({ navigation, route }) {
             <TouchableOpacity
               onPress={() => setTelaAtual('AlterarAvatar')}
               activeOpacity={0.7}
-              style={estilos.iconeMargem}
+              style={estilos.botaoEditar}
+              accessibilityLabel="Alterar avatar"
             >
               <Feather
                 name="edit-2"
@@ -125,11 +126,13 @@ export default function PerfilScreen({ navigation, route }) {
           >
             <Text style={estilos.textoOpcao}>Alterar senha</Text>
 
-            <Feather
-              name="edit-2"
-              size={16}
-              color={COLORS.primary}
-            />
+            <View style={estilos.acaoOpcao}>
+              <Feather
+                name="edit-2"
+                size={15}
+                color={COLORS.primary}
+              />
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -139,11 +142,13 @@ export default function PerfilScreen({ navigation, route }) {
           >
             <Text style={estilos.textoOpcao}>Alterar tema</Text>
 
-            <Feather
-              name="edit-2"
-              size={16}
-              color={COLORS.primary}
-            />
+            <View style={estilos.acaoOpcao}>
+              <Feather
+                name="edit-2"
+                size={15}
+                color={COLORS.primary}
+              />
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -155,11 +160,13 @@ export default function PerfilScreen({ navigation, route }) {
               Conteúdos bloqueados
             </Text>
 
-            <Feather
-              name="edit-2"
-              size={16}
-              color={COLORS.primary}
-            />
+            <View style={estilos.acaoOpcao}>
+              <Feather
+                name="edit-2"
+                size={15}
+                color={COLORS.primary}
+              />
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -317,14 +324,15 @@ const estilos = StyleSheet.create({
   secaoPerfil: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 28,
+    padding: 16,
   },
 
   fotoPerfil: {
-    width: 65,
-    height: 65,
-    borderRadius: 35,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     borderWidth: 2,
     borderColor: COLORS.primary,
     marginRight: 16,
@@ -333,29 +341,40 @@ const estilos = StyleSheet.create({
   infoPerfil: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    flexWrap: 'wrap',
   },
 
   saudacao: {
     color: COLORS.primary,
     fontSize: 20,
     fontWeight: 'bold',
-    marginRight: 8,
+    marginRight: 0,
   },
 
-  iconeMargem: {
-    marginLeft: 4,
-    padding: 5,
+  botaoEditar: {
+    marginLeft: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#21172e',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   listaOpcoes: {
-    marginBottom: 28,
+    marginBottom: 30,
+    gap: 10,
   },
 
   itemOpcao: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
+    justifyContent: 'flex-start',
+    alignSelf: 'flex-start',
+    paddingVertical: 13,
+    paddingHorizontal: 15,
+    minHeight: 50,
   },
 
   textoOpcao: {
@@ -364,11 +383,22 @@ const estilos = StyleSheet.create({
     fontWeight: '500',
   },
 
+  acaoOpcao: {
+    marginLeft: 10,
+    width: 27,
+    height: 27,
+    borderRadius: 14,
+    backgroundColor: '#21172e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   tituloSecao: {
     color: '#FFFFFF',
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 8,
+    marginLeft: 2,
   },
 
   listaFilmes: {
@@ -385,8 +415,8 @@ const estilos = StyleSheet.create({
   cartaoFilme: {
     width: 96,
     height: 146,
-    marginBottom: 0,
     position: 'relative',
+    marginBottom: 0,
   },
 
   posterFilme: {
