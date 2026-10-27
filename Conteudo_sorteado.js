@@ -12,8 +12,11 @@ import {
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { COLORS } from './theme';
+import { COLORS, useTheme } from './theme';
 import { getBlockedMovies } from './blockedStore';
+import { getEvaluatedMovies } from './evaluatedStore';
+import { getFavoriteMovies } from './favoriteMoviesStore';
+import AnimacaoSorteio from './AnimacaoSorteio';
 
 const API_KEY = '0d335050c2cc3308096c03300829a424';
 
@@ -32,20 +35,105 @@ const mapaGeneros = {
   Documentário: 99,
 };
 
+function getGenreIds(movie) {
+  if (Array.isArray(movie.genre_ids)) {
+    return movie.genre_ids;
+  }
+
+  if (Array.isArray(movie.genres)) {
+    return movie.genres.map((genre) => genre.id).filter(Boolean);
+  }
+
+  return [];
+}
+
+function buildGenrePreferences() {
+  const scores = new Map();
+
+  getEvaluatedMovies().forEach((movie) => {
+    const rating = Number(movie.userRating) || 0;
+    const score = (rating - 3) * 2;
+    if (!score) return;
+
+    getGenreIds(movie).forEach((genreId) => {
+      scores.set(genreId, (scores.get(genreId) || 0) + score);
+    });
+  });
+
+  getFavoriteMovies().forEach((movie) => {
+    getGenreIds(movie).forEach((genreId) => {
+      scores.set(genreId, (scores.get(genreId) || 0) + 4);
+    });
+  });
+
+  return scores;
+}
+
+function getPreferenceWeight(movie, preferences) {
+  const genreIds = getGenreIds(movie);
+  if (genreIds.length === 0 || preferences.size === 0) {
+    return 1;
+  }
+
+  const preference = genreIds.reduce((total, genreId) => {
+    const score = preferences.get(genreId) || 0;
+    return total + score / (Math.abs(score) + 2);
+  }, 0) / genreIds.length;
+
+  return Math.max(0.15, 1 + preference * 4.5);
+}
+
+function chooseWeightedMovie(movies, preferences) {
+  const weightedMovies = movies.map((movie) => ({
+    movie,
+    weight: getPreferenceWeight(movie, preferences),
+  }));
+  const totalWeight = weightedMovies.reduce(
+    (total, item) => total + item.weight,
+    0
+  );
+  let choice = Math.random() * totalWeight;
+
+  for (const item of weightedMovies) {
+    choice -= item.weight;
+    if (choice < 0) {
+      return item.movie;
+    }
+  }
+
+  return weightedMovies[weightedMovies.length - 1]?.movie || null;
+}
+
 export default function ConteudoSorteado() {
+  const {
+    background,
+    border,
+    primary,
+    surfaceElevated,
+    text,
+    textSoft,
+  } = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
 
   const { height } = useWindowDimensions();
 
   const filtros = route.params?.filtros || {};
+  const possuiFiltrosDeCatalogo = Boolean(
+    (filtros.generos && filtros.generos.length > 0) ||
+      (filtros.ano && filtros.ano !== 'Todos') ||
+      (filtros.duracao && filtros.duracao !== 'Qualquer duração')
+  );
   const apelido = route.params?.apelido;
   const senha = route.params?.senha;
+  const sorteioId = route.params?.sorteioId || 0;
   const filtrosKey = JSON.stringify(filtros);
 
   const [filme, setFilme] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
+  const [sorteando, setSorteando] = useState(false);
+  const [animacaoId, setAnimacaoId] = useState(0);
   const solicitacaoRef = useRef(0);
   const sorteioRef = useRef({
     filtrosKey: '',
@@ -53,12 +141,23 @@ export default function ConteudoSorteado() {
     paginasVisitadas: new Set(),
     totalPaginas: 0,
     primeiraPagina: null,
+    exigirVotosMinimos: false,
   });
 
   const voltar = () => navigation.goBack();
 
   const navegar = (tela) => {
     navigation.navigate(tela, { apelido, senha });
+  };
+
+  const iniciarSorteio = () => {
+    setSorteando(true);
+    setAnimacaoId((id) => id + 1);
+  };
+
+  const concluirAnimacao = () => {
+    setSorteando(false);
+    buscarFilmeAleatorio();
   };
 
   useEffect(() => {
@@ -68,10 +167,17 @@ export default function ConteudoSorteado() {
       paginasVisitadas: new Set(),
       totalPaginas: 0,
       primeiraPagina: null,
+      exigirVotosMinimos: possuiFiltrosDeCatalogo,
     };
+  }, [filtrosKey]);
+
+  useEffect(() => {
+    solicitacaoRef.current += 1;
     setFilme(null);
     setErro('');
-  }, [filtrosKey]);
+    setCarregando(true);
+    iniciarSorteio();
+  }, [filtrosKey, sorteioId]);
 
   const buscarFilmeAleatorio = async () => {
     const solicitacao = solicitacaoRef.current + 1;
@@ -89,17 +195,22 @@ export default function ConteudoSorteado() {
           paginasVisitadas: new Set(),
           totalPaginas: 0,
           primeiraPagina: null,
+          exigirVotosMinimos: possuiFiltrosDeCatalogo,
         };
         sorteioRef.current = sorteio;
       }
 
-      const carregarPagina = async (pagina) => {
+      const carregarPagina = async (pagina, exigirVotos = possuiFiltrosDeCatalogo) => {
         const params = new URLSearchParams({
           api_key: API_KEY,
           language: 'pt-BR',
           sort_by: 'popularity.desc',
           page: String(pagina),
         });
+
+        if (exigirVotos) {
+          params.append('vote_count.gte', '50');
+        }
 
         if (filtros.generos && filtros.generos.length > 0) {
           params.append(
@@ -156,28 +267,38 @@ export default function ConteudoSorteado() {
       };
 
       if (!sorteio.totalPaginas) {
-        const data = await carregarPagina(1);
+        let exigirVotosMinimos = possuiFiltrosDeCatalogo;
+        let data = await carregarPagina(1, exigirVotosMinimos);
+        if (exigirVotosMinimos && data.results?.length === 0) {
+          exigirVotosMinimos = false;
+          data = await carregarPagina(1, false);
+        }
+        sorteio.exigirVotosMinimos = exigirVotosMinimos;
         sorteio.totalPaginas = Math.min(data.total_pages || 1, 500);
         sorteio.primeiraPagina = data;
       }
 
+      const limitePaginas = possuiFiltrosDeCatalogo
+        ? Math.min(sorteio.totalPaginas, 5)
+        : sorteio.totalPaginas;
       const bloqueados = new Set(
         getBlockedMovies().map((item) => String(item.id))
       );
+      const preferenciasDeGenero = buildGenrePreferences();
       const repetidosDisponiveis = [];
       let filmeAleatorio = null;
       const maxTentativas = Math.min(sorteio.totalPaginas, 10);
 
       for (let tentativa = 0; tentativa < maxTentativas; tentativa += 1) {
         let paginasDisponiveis = Array.from(
-          { length: sorteio.totalPaginas },
+          { length: limitePaginas },
           (_, index) => index + 1
         ).filter((pagina) => !sorteio.paginasVisitadas.has(pagina));
 
         if (paginasDisponiveis.length === 0) {
           sorteio.paginasVisitadas.clear();
           paginasDisponiveis = Array.from(
-            { length: sorteio.totalPaginas },
+            { length: limitePaginas },
             (_, index) => index + 1
           );
         }
@@ -186,9 +307,12 @@ export default function ConteudoSorteado() {
         const pagina = paginasDisponiveis[indicePagina];
         sorteio.paginasVisitadas.add(pagina);
 
-        const data = pagina === 1 && sorteio.primeiraPagina
+        let data = pagina === 1 && sorteio.primeiraPagina
           ? sorteio.primeiraPagina
-          : await carregarPagina(pagina);
+          : await carregarPagina(pagina, sorteio.exigirVotosMinimos);
+        if (sorteio.exigirVotosMinimos && data.results?.length === 0) {
+          data = await carregarPagina(pagina, false);
+        }
         const candidatos = (data.results || []).filter(
           (item) => item.id && !bloqueados.has(String(item.id))
         );
@@ -204,18 +328,20 @@ export default function ConteudoSorteado() {
         );
 
         if (filmesNovos.length > 0) {
-          filmeAleatorio =
-            filmesNovos[Math.floor(Math.random() * filmesNovos.length)];
+          filmeAleatorio = chooseWeightedMovie(
+            filmesNovos,
+            preferenciasDeGenero
+          );
           break;
         }
       }
 
       if (!filmeAleatorio && repetidosDisponiveis.length > 0) {
         sorteio.filmesJaMostrados.clear();
-        filmeAleatorio =
-          repetidosDisponiveis[
-            Math.floor(Math.random() * repetidosDisponiveis.length)
-          ];
+        filmeAleatorio = chooseWeightedMovie(
+          repetidosDisponiveis,
+          preferenciasDeGenero
+        );
       }
 
       if (!filmeAleatorio) {
@@ -258,10 +384,6 @@ export default function ConteudoSorteado() {
     }
   };
 
-  useEffect(() => {
-    buscarFilmeAleatorio();
-  }, [filtrosKey]);
-
   const poster = filme?.poster_path
     ? `https://image.tmdb.org/t/p/w500${filme.poster_path}`
     : null;
@@ -269,7 +391,7 @@ export default function ConteudoSorteado() {
   const alturaPoster = Math.min(Math.max(height * 0.4, 220), 380);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: background }]}>
 
       {/* Seta de voltar */}
       <Pressable
@@ -279,7 +401,7 @@ export default function ConteudoSorteado() {
         <Ionicons
           name="chevron-back"
           size={42}
-          color={COLORS.primary}
+          color={primary}
         />
       </Pressable>
 
@@ -296,22 +418,23 @@ export default function ConteudoSorteado() {
           <View style={styles.loadingBox}>
             <ActivityIndicator
               size="large"
-              color={COLORS.primary}
+              color={primary}
             />
 
-            <Text style={styles.loadingText}>
+            <Text style={[styles.loadingText, { color: text }]}>
               Sorteando filme...
             </Text>
           </View>
         ) : erro ? (
           <View style={styles.loadingBox}>
-            <Text style={styles.erroText}>
+            <Text style={[styles.erroText, { color: text }]}>
               {erro}
             </Text>
 
             <Pressable
-              style={styles.botaoTentar}
-              onPress={buscarFilmeAleatorio}
+              style={[styles.botaoTentar, { backgroundColor: primary }]}
+              onPress={iniciarSorteio}
+              disabled={sorteando}
             >
               <Text style={styles.textoBotaoTentar}>
                 Tentar novamente
@@ -352,17 +475,17 @@ export default function ConteudoSorteado() {
                     <Ionicons
                       name="film-outline"
                       size={55}
-                      color={COLORS.primary}
+                      color={primary}
                     />
 
-                    <Text style={styles.posterFallbackText}>
+                    <Text style={[styles.posterFallbackText, { color: text }]}>
                       Sem pôster disponível
                     </Text>
                   </View>
                 )}
               </View>
 
-              <Text style={styles.title}>
+              <Text style={[styles.title, { color: text }]}>
                 {filme.title || filme.original_title}
               </Text>
             </Pressable>
@@ -372,9 +495,9 @@ export default function ConteudoSorteado() {
         {/* Botão de sortear novamente */}
         {!erro && (
           <Pressable
-            style={styles.botaoSortear}
-            onPress={buscarFilmeAleatorio}
-            disabled={carregando}
+            style={[styles.botaoSortear, { backgroundColor: primary }]}
+            onPress={iniciarSorteio}
+            disabled={carregando || sorteando}
           >
             <Ionicons
               name="refresh"
@@ -390,7 +513,12 @@ export default function ConteudoSorteado() {
       </View>
 
       {/* Barra inferior igual à tela Minha Lista */}
-      <View style={styles.barraNavegacao}>
+      <View
+        style={[
+          styles.barraNavegacao,
+          { backgroundColor: surfaceElevated, borderTopColor: border },
+        ]}
+      >
         <Pressable
           style={styles.itemNav}
           onPress={() => navegar('Principal')}
@@ -398,7 +526,7 @@ export default function ConteudoSorteado() {
           <Ionicons
             name="home-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </Pressable>
 
@@ -409,7 +537,7 @@ export default function ConteudoSorteado() {
           <Ionicons
             name="search-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </Pressable>
 
@@ -420,7 +548,7 @@ export default function ConteudoSorteado() {
           <Ionicons
             name="list-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </Pressable>
 
@@ -431,7 +559,7 @@ export default function ConteudoSorteado() {
           <Feather
             name="check"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </Pressable>
 
@@ -442,10 +570,16 @@ export default function ConteudoSorteado() {
           <Ionicons
             name="person-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </Pressable>
       </View>
+
+      <AnimacaoSorteio
+        visible={sorteando}
+        runId={animacaoId}
+        onComplete={concluirAnimacao}
+      />
     </View>
   );
 }
@@ -453,7 +587,6 @@ export default function ConteudoSorteado() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
     alignItems: 'center',
   },
 
@@ -518,12 +651,10 @@ const styles = StyleSheet.create({
   },
 
   posterFallbackText: {
-    color: COLORS.text,
     fontSize: 16,
   },
 
   title: {
-    color: 'white',
     fontSize: 28,
     textAlign: 'center',
     marginTop: 12,
@@ -576,13 +707,11 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    color: COLORS.text,
     marginTop: 15,
     fontSize: 17,
   },
 
   erroText: {
-    color: '#ffb4b4',
     fontSize: 16,
     textAlign: 'center',
   },

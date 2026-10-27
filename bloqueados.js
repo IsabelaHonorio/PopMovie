@@ -11,7 +11,7 @@ import {
 
 import { Ionicons, Feather } from '@expo/vector-icons';
 
-import { COLORS, commonStyles } from './theme';
+import { COLORS, commonStyles, useTheme } from './theme';
 
 import {
   getBlockedMovies,
@@ -20,6 +20,14 @@ import {
 } from './blockedStore';
 
 export default function BloqueadosScreen({ navigation, route, voltar }) {
+  const {
+    background,
+    border,
+    primary,
+    surfaceElevated,
+    text,
+    textSoft,
+  } = useTheme();
   const { apelido, senha } = route?.params || {};
 
   const voltarParaPerfil = () => {
@@ -41,7 +49,7 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
     navigation?.navigate(tela, { apelido, senha });
 
   return (
-    <View style={commonStyles.container}>
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
       {/* Cabeçalho alinhado ao padrão de Minha Lista */}
       <View style={estilos.areaSuperior}>
         <TouchableOpacity
@@ -53,7 +61,7 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
           <Ionicons
             name="chevron-back"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -65,7 +73,9 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
       </View>
 
       {/* Título */}
-      <Text style={commonStyles.title}>Conteúdos Bloqueados</Text>
+      <Text style={[commonStyles.title, { color: text }]}>
+        Conteúdos Bloqueados
+      </Text>
 
       {/* Desenho e descrição abaixo do título */}
       <View style={estilos.secaoAviso}>
@@ -76,11 +86,11 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
         />
 
         <View style={estilos.frases}>
-          <Text style={estilos.textoAviso}>
+          <Text style={[estilos.textoAviso, { color: text }]}>
             Estes itens estão bloqueados.
           </Text>
 
-          <Text style={estilos.textoAviso}>
+          <Text style={[estilos.textoAviso, { color: text }]}>
             Desbloqueie-os para sorteá-los.
           </Text>
         </View>
@@ -97,7 +107,7 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
         showsVerticalScrollIndicator={false}
         indicatorStyle="white"
         ListEmptyComponent={
-          <Text style={estilos.mensagemVazia}>
+          <Text style={[estilos.mensagemVazia, { color: textSoft }]}>
             Nenhum filme bloqueado.
           </Text>
         }
@@ -135,7 +145,7 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
                   <Ionicons
                     name="lock-closed"
                     size={26}
-                    color={COLORS.primary}
+                    color={primary}
                   />
                 </View>
               </View>
@@ -160,7 +170,12 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
       />
 
       {/* Rodapé igual ao da tela Minha Lista: cinco ícones */}
-      <View style={estilos.barraNavegacao}>
+      <View
+        style={[
+          estilos.barraNavegacao,
+          { backgroundColor: surfaceElevated, borderTopColor: border },
+        ]}
+      >
         <TouchableOpacity
           style={estilos.itemNav}
           activeOpacity={0.7}
@@ -169,7 +184,7 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
           <Ionicons
             name="home-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -181,7 +196,7 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
           <Ionicons
             name="search-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -193,7 +208,7 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
           <Ionicons
             name="list-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -205,7 +220,7 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
           <Feather
             name="check"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -217,7 +232,7 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
           <Ionicons
             name="person-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
       </View>

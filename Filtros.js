@@ -7,7 +7,7 @@ import {
   StyleSheet,
   StatusBar,
 } from 'react-native';
-import { COLORS, commonStyles } from './theme';
+import { COLORS, commonStyles, useTheme } from './theme';
 
 const generos = [
   'Todos', 'Ação', 'Animação',
@@ -39,12 +39,14 @@ function FiltroCard({
   selecionados,
   onSelecionar,
 }) {
+  const { border, primary, surface, text, textSoft } = useTheme();
+
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>{titulo}</Text>
+    <View style={[styles.card, { backgroundColor: surface, borderColor: primary }]}>
+      <Text style={[styles.cardTitle, { color: text }]}>{titulo}</Text>
 
       {subtitulo ? (
-        <Text style={styles.subtitle}>{subtitulo}</Text>
+        <Text style={[styles.subtitle, { color: textSoft }]}>{subtitulo}</Text>
       ) : null}
 
       <View style={styles.options}>
@@ -55,12 +57,22 @@ function FiltroCard({
             <Pressable
               key={opcao}
               onPress={() => onSelecionar(opcao)}
-              style={[styles.option, ativo && styles.optionActive]}
+              style={[
+                styles.option,
+                { borderColor: primary },
+                { backgroundColor: surface },
+                ativo && styles.optionActive,
+                ativo && { backgroundColor: primary },
+              ]}
               accessibilityRole="button"
               accessibilityState={{ selected: ativo }}
             >
               <Text
-                style={[styles.optionText, ativo && styles.optionTextActive]}
+                style={[
+                  styles.optionText,
+                  { color: text },
+                  ativo && styles.optionTextActive,
+                ]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
@@ -75,6 +87,7 @@ function FiltroCard({
 }
 
 export default function FiltrosScreen({ navigation, route }) {
+  const { background, primary, surfaceElevated, text } = useTheme();
   const { apelido, senha } = route.params || {};
   const voltarParaPrincipal = () => navigation.navigate('Principal', { apelido, senha });
 
@@ -113,19 +126,27 @@ export default function FiltrosScreen({ navigation, route }) {
       ano: anosSelecionados[0] || 'Todos',
     };
 
-    navigation.navigate('ConteudoSorteado', { filtros });
+    navigation.navigate('ConteudoSorteado', {
+      filtros,
+      apelido,
+      senha,
+      sorteioId: Date.now(),
+    });
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor="#000000" barStyle="light-content" />
+    <View style={[styles.container, { backgroundColor: background }]}>
+      <StatusBar
+        backgroundColor={background}
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
+      />
 
       <View style={styles.header}>
         <Pressable style={commonStyles.backButton} accessibilityLabel="Voltar" onPress={voltarParaPrincipal}>
-          <Text style={commonStyles.backArrow}>‹</Text>
+          <Text style={[commonStyles.backArrow, { color: primary }]}>‹</Text>
         </Pressable>
 
-        <Text style={styles.title}>Filtros</Text>
+        <Text style={[styles.title, { color: text }]}>Filtros</Text>
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={true}>
@@ -161,8 +182,14 @@ export default function FiltrosScreen({ navigation, route }) {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <View style={styles.footer}>
-        <Pressable style={styles.applyButton} onPress={aplicarFiltros}>
+      <View style={[styles.footer, { backgroundColor: background }]}>
+        <Pressable
+          style={[
+            styles.applyButton,
+            { backgroundColor: primary, shadowColor: primary },
+          ]}
+          onPress={aplicarFiltros}
+        >
           <Text style={styles.applyText}>Aplicar Filtros</Text>
         </Pressable>
       </View>
@@ -173,7 +200,6 @@ export default function FiltrosScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   header: {
@@ -183,7 +209,6 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: COLORS.text,
     fontSize: 42,
     fontWeight: '700',
   },
@@ -202,7 +227,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.primary,
     borderRadius: 22,
-    backgroundColor: '#080008',
     paddingHorizontal: 11,
     paddingTop: 10,
     paddingBottom: 10,
@@ -210,14 +234,12 @@ const styles = StyleSheet.create({
   },
 
   cardTitle: {
-    color: COLORS.text,
     fontSize: 24,
     fontWeight: '600',
     textAlign: 'center',
   },
 
   subtitle: {
-    color: COLORS.textSoft,
     fontSize: 16,
     marginLeft: 41,
     marginTop: 1,
@@ -240,7 +262,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.background,
     flexGrow: 1,
   },
 
@@ -249,7 +270,6 @@ const styles = StyleSheet.create({
   },
 
   optionText: {
-    color: COLORS.text,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -264,7 +284,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 105,
-    backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

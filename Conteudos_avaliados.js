@@ -10,10 +10,18 @@ import {
 
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS, commonStyles } from './theme';
+import { COLORS, commonStyles, useTheme } from './theme';
 import { getEvaluatedMovies } from './evaluatedStore';
 
 export default function ConteudosAvaliadosScreen({ navigation, route }) {
+  const {
+    background,
+    border,
+    primary,
+    surfaceElevated,
+    text,
+    textSoft,
+  } = useTheme();
   const { apelido, senha } = route.params || {};
   const [filmes, setFilmes] = useState(getEvaluatedMovies());
 
@@ -24,7 +32,7 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
   );
 
   return (
-    <View style={commonStyles.container}>
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
       {/* Logo na parte superior */}
       <View style={styles.areaSuperior}>
         <Image
@@ -35,7 +43,9 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
       </View>
 
       {/* Título */}
-      <Text style={commonStyles.title}>Conteúdos Avaliados</Text>
+      <Text style={[commonStyles.title, { color: text }]}>
+        Conteúdos Avaliados
+      </Text>
 
       {/* Desenho e frases abaixo do título */}
       <View style={styles.cabecalhoLista}>
@@ -46,11 +56,11 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
         />
 
         <View style={styles.frases}>
-          <Text style={styles.text}>
+          <Text style={[styles.text, { color: text }]}>
             Conteúdos que você avaliou.
           </Text>
 
-          <Text style={styles.text}>
+          <Text style={[styles.text, { color: text }]}>
             Veja seu histórico de filmes.
           </Text>
         </View>
@@ -66,12 +76,13 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
         contentContainerStyle={styles.listaFilmes}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: textSoft }]}>
             Nenhum filme encontrado.
           </Text>
         }
         renderItem={({ item }) => (
           <TouchableOpacity
+            style={styles.itemFilme}
             activeOpacity={0.8}
             onPress={() =>
               navigation.navigate('DetalhesFilme', {
@@ -95,7 +106,12 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
       />
 
       {/* Barra de navegação inferior */}
-      <View style={styles.barraNavegacao}>
+      <View
+        style={[
+          styles.barraNavegacao,
+          { backgroundColor: surfaceElevated, borderTopColor: border },
+        ]}
+      >
         <TouchableOpacity
           style={styles.itemNav}
           activeOpacity={0.7}
@@ -106,7 +122,7 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
           <Ionicons
             name="home-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -120,7 +136,7 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
           <Ionicons
             name="search-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -134,7 +150,7 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
           <Ionicons
             name="list-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -148,7 +164,7 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
           <Feather
             name="check"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -162,7 +178,7 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
           <Ionicons
             name="person-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
       </View>
@@ -221,8 +237,11 @@ const styles = StyleSheet.create({
   },
 
   columnWrapper: {
-    justifyContent: 'space-between',
     marginBottom: 18,
+  },
+
+  itemFilme: {
+    width: '33.333%',
   },
 
   poster: {

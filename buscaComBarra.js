@@ -1,263 +1,340 @@
-
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  SafeAreaView,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
+  ActivityIndicator,
   Image,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
-} from "react-native";
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { COLORS, useTheme } from './theme';
+import {
+  getFavoriteMovies,
+  subscribeToFavoriteMovies,
+  toggleFavoriteMovie,
+} from './favoriteMoviesStore';
 
-import { Ionicons, Feather } from "@expo/vector-icons";
+const API_KEY = '0d335050c2cc3308096c03300829a424';
+const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w200';
 
-const MOVIES = [
-  {
-    id: "1",
-    title: "Whiplash",
-    year: "2014",
-    rating: "8.5",
-    poster:
-      "https://image.tmdb.org/t/p/w200/7fn624j5lj3xTme2SgiLCeuedmO.jpg",
-  },
-  {
-    id: "2",
-    title: "Parasita",
-    year: "2019",
-    rating: "8.5",
-    poster:
-      "https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
-  },
-  {
-    id: "3",
-    title: "Toy Story",
-    year: "1995",
-    rating: "8.7",
-    poster:
-      "https://image.tmdb.org/t/p/w200/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg",
-  },
-  {
-    id: "4",
-    title: "Interestelar",
-    year: "2014",
-    rating: "8.7",
-    poster:
-      "https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-  },
-];
+export default function BuscaComBarra({ navigation, route }) {
+  const {
+    background,
+    border,
+    primary,
+    surface,
+    surfaceElevated,
+    text,
+    textSoft,
+  } = useTheme();
+  const { apelido, senha } = route.params || {};
+  const [busca, setBusca] = useState('');
+  const [filmes, setFilmes] = useState([]);
+  const [filmesFavoritos, setFilmesFavoritos] = useState(getFavoriteMovies());
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [tentativa, setTentativa] = useState(0);
+  const solicitacaoRef = useRef(0);
 
-export default function App() {
-  const [search, setSearch] = useState("");
-  const [favorites, setFavorites] = useState([]);
-  const [featuredMovie, setFeaturedMovie] = useState("3");
-  const [activeTab, setActiveTab] = useState("search");
+  useEffect(() => subscribeToFavoriteMovies(setFilmesFavoritos), []);
 
-  const filteredMovies = MOVIES.filter((movie) =>
-    movie.title.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    const consulta = busca.trim();
+    const solicitacao = solicitacaoRef.current + 1;
+    solicitacaoRef.current = solicitacao;
 
-  const toggleFavorite = (id) => {
-    setFavorites((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id]
-    );
+    if (consulta.length < 2) {
+      setFilmes([]);
+      setErro('');
+      setCarregando(false);
+      return undefined;
+    }
+
+    setCarregando(true);
+    setErro('');
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({
+          api_key: API_KEY,
+          language: 'pt-BR',
+          query: consulta,
+          include_adult: 'false',
+          page: '1',
+        });
+        const response = await fetch(
+          `https://api.themoviedb.org/3/search/movie?${params.toString()}`,
+          { signal: controller.signal }
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.status_message || 'Não foi possível buscar filmes.'
+          );
+        }
+
+        if (solicitacao === solicitacaoRef.current) {
+          setFilmes(data.results || []);
+        }
+      } catch (error) {
+        if (
+          error.name !== 'AbortError' &&
+          solicitacao === solicitacaoRef.current
+        ) {
+          console.error(error);
+          setErro(
+            error.message || 'Não foi possível buscar filmes. Tente novamente.'
+          );
+          setFilmes([]);
+        }
+      } finally {
+        if (solicitacao === solicitacaoRef.current) {
+          setCarregando(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [busca, tentativa]);
+
+  const abrirDetalhes = (filme) => {
+    navigation.navigate('DetalhesFilme', {
+      filme,
+      idFilme: filme.id,
+      apelido,
+      senha,
+    });
   };
 
-  const handleNavigation = (tab) => {
-    setActiveTab(tab);
-    // A navegação entre telas será implementada depois.
+  const navegar = (tela) => {
+    navigation.navigate(tela, { apelido, senha });
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: background }]}>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor="#000000"
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
+        backgroundColor={background}
       />
 
-      <View style={styles.screen}>
-        {/* Cabeçalho */}
+      <View style={[styles.screen, { backgroundColor: background }]}>
         <View style={styles.header}>
-          <TouchableOpacity
+          <Pressable
             style={styles.backButton}
-            activeOpacity={0.7}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
             accessibilityLabel="Voltar"
           >
-            <Text style={styles.backArrow}>‹</Text>
-          </TouchableOpacity>
+            <Ionicons name="chevron-back" size={30} color={primary} />
+          </Pressable>
 
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('./assets/Logo.png')}
-              style={styles.logo}
-            />
-          </View>
+          <Image
+            source={require('./assets/PopMovielogo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
-        <Text style={styles.heading}>Buscar filmes</Text>
+        <Text style={[styles.heading, { color: text }]}>Buscar filmes</Text>
 
-        {/* Campo de busca */}
-        <View style={styles.searchBar}>
+        <View
+          style={[
+            styles.searchBar,
+            { borderColor: primary, backgroundColor: surface },
+          ]}
+        >
           <Ionicons
             name="search-outline"
             size={22}
-            color="#953CFD"
+            color={primary}
             style={styles.searchIcon}
           />
-
           <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar filmes"
-            placeholderTextColor="#D1CCD4"
-            value={search}
-            onChangeText={setSearch}
-            selectionColor="#B12AFF"
+            style={[styles.searchInput, { color: text }]}
+            placeholder="Digite o nome de um filme"
+            placeholderTextColor={textSoft}
+            value={busca}
+            onChangeText={setBusca}
+            selectionColor={primary}
             returnKeyType="search"
+            autoCorrect={false}
+            accessibilityLabel="Buscar filmes"
           />
+          {busca.length > 0 && (
+            <Pressable
+              onPress={() => setBusca('')}
+              accessibilityRole="button"
+              accessibilityLabel="Limpar busca"
+              hitSlop={8}
+            >
+              <Ionicons name="close-circle" size={21} color={textSoft} />
+            </Pressable>
+          )}
         </View>
 
-        {/* Lista de filmes */}
         <ScrollView
           style={styles.movieScroll}
           contentContainerStyle={styles.movieList}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {filteredMovies.map((movie) => {
-            const isFavorite = favorites.includes(movie.id);
-            const isFeatured = featuredMovie === movie.id;
+          {busca.trim().length < 2 ? (
+            <View style={styles.feedback}>
+              <Ionicons name="film-outline" size={40} color={primary} />
+              <Text style={[styles.feedbackText, { color: textSoft }]}>
+                Digite pelo menos 2 caracteres para buscar.
+              </Text>
+            </View>
+          ) : carregando ? (
+            <View style={styles.feedback}>
+              <ActivityIndicator size="large" color={primary} />
+              <Text style={[styles.feedbackText, { color: textSoft }]}>
+                Buscando filmes...
+              </Text>
+            </View>
+          ) : erro ? (
+            <View style={styles.feedback}>
+              <Text style={[styles.feedbackText, { color: textSoft }]}>
+                {erro}
+              </Text>
+              <Pressable
+                style={[styles.retryButton, { backgroundColor: primary }]}
+                onPress={() => setTentativa((valor) => valor + 1)}
+              >
+                <Text style={styles.retryText}>Tentar novamente</Text>
+              </Pressable>
+            </View>
+          ) : filmes.length === 0 ? (
+            <View style={styles.feedback}>
+              <Text style={[styles.feedbackText, { color: textSoft }]}>
+                Nenhum filme encontrado para “{busca.trim()}”.
+              </Text>
+            </View>
+          ) : (
+            filmes.map((filme) => {
+              const favorito = filmesFavoritos.some(
+                (item) => String(item.id) === String(filme.id)
+              );
+              const poster = filme.poster_path
+                ? `${IMAGE_BASE_URL}${filme.poster_path}`
+                : null;
+              const ano = filme.release_date
+                ? filme.release_date.slice(0, 4)
+                : 'Ano não informado';
 
-            return (
-              <View key={movie.id} style={styles.movieCard}>
-                <Image
-                  source={{ uri: movie.poster }}
-                  style={styles.poster}
-                  resizeMode="cover"
-                />
+              return (
+                <Pressable
+                  key={filme.id}
+                  style={[
+                    styles.movieCard,
+                    { borderColor: primary, backgroundColor: surface },
+                  ]}
+                  onPress={() => abrirDetalhes(filme)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir detalhes de ${filme.title || filme.original_title}`}
+                >
+                  {poster ? (
+                    <Image
+                      source={{ uri: poster }}
+                      style={styles.poster}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.posterFallback}>
+                      <Ionicons name="film-outline" size={32} color={primary} />
+                    </View>
+                  )}
 
-                <View style={styles.movieInfo}>
-                  <Text
-                    style={styles.movieTitle}
-                    numberOfLines={1}
-                  >
-                    {movie.title}
-                  </Text>
-
-                  <Text style={styles.movieYear}>
-                    ({movie.year})
-                  </Text>
-
-                  <View style={styles.ratingRow}>
-                    <Text style={styles.ratingStar}>★</Text>
-                    <Text style={styles.ratingText}>
-                      {movie.rating}
+                  <View style={styles.movieInfo}>
+                    <Text style={[styles.movieTitle, { color: text }]} numberOfLines={2}>
+                      {filme.title || filme.original_title}
                     </Text>
+                    <Text style={[styles.movieYear, { color: textSoft }]}>{ano}</Text>
+                    <View style={styles.ratingRow}>
+                      <Ionicons name="star" size={17} color="#FFD400" />
+                      <Text style={[styles.ratingText, { color: text }]}>
+                        {filme.vote_average
+                          ? filme.vote_average.toFixed(1)
+                          : 'Sem nota'}
+                      </Text>
+                    </View>
                   </View>
-                </View>
 
-                <View style={styles.actions}>
-                  <TouchableOpacity
-                    style={[
-                      styles.featureButton,
-                      !isFeatured && styles.featureButtonHidden,
-                    ]}
-                    onPress={() =>
-                      setFeaturedMovie(
-                        isFeatured ? null : movie.id
-                      )
-                    }
-                    activeOpacity={0.7}
-                    accessibilityLabel="Destacar filme"
-                  >
-                    {isFeatured && (
-                      <Text style={styles.featureStar}>☆</Text>
-                    )}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.heartButton}
-                    onPress={() => toggleFavorite(movie.id)}
-                    activeOpacity={0.7}
+                  <Pressable
+                    style={styles.favoriteButton}
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      toggleFavoriteMovie(filme);
+                    }}
+                    accessibilityRole="button"
                     accessibilityLabel={
-                      isFavorite
-                        ? "Remover dos favoritos"
-                        : "Adicionar aos favoritos"
+                      favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'
                     }
+                    hitSlop={8}
                   >
                     <Ionicons
-                      name={isFavorite ? "heart" : "heart-outline"}
-                      size={34}
-                      color="#953CFD"
+                      name={favorito ? 'heart' : 'heart-outline'}
+                      size={27}
+                      color={primary}
                     />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          })}
-
-          {filteredMovies.length === 0 && (
-            <Text style={styles.emptyMessage}>
-              Nenhum filme encontrado.
-            </Text>
+                  </Pressable>
+                </Pressable>
+              );
+            })
           )}
         </ScrollView>
 
-        {/* Barra de navegação inferior */}
-        <View style={styles.barraNavegacao}>
-          <TouchableOpacity
+        <View
+          style={[
+            styles.barraNavegacao,
+            { backgroundColor: surfaceElevated, borderTopColor: border },
+          ]}
+        >
+          <Pressable
             style={styles.itemNav}
-            activeOpacity={0.7}
-            onPress={() => handleNavigation("home")}
+            onPress={() => navegar('Principal')}
             accessibilityLabel="Início"
           >
-            <Ionicons
-              name="home-outline"
-              size={24}
-              color="#953CFD"
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
+            <Ionicons name="home-outline" size={29} color={primary} />
+          </Pressable>
+          <Pressable
             style={styles.itemNav}
-            activeOpacity={0.7}
-            onPress={() => handleNavigation("search")}
-            accessibilityLabel="Buscar filmes"
+            onPress={() => navegar('Buscar')}
+            accessibilityLabel="Buscar"
           >
-            <Ionicons
-              name="list-outline"
-              size={24}
-              color="#953CFD"
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
+            <Ionicons name="search" size={29} color={primary} />
+          </Pressable>
+          <Pressable
             style={styles.itemNav}
-            activeOpacity={0.7}
-            onPress={() => handleNavigation("watched")}
-            accessibilityLabel="Filmes assistidos"
+            onPress={() => navegar('MinhaLista')}
+            accessibilityLabel="Minha lista"
           >
-            <Feather
-              name="check"
-              size={24}
-              color="#953CFD"
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
+            <Ionicons name="list-outline" size={29} color={primary} />
+          </Pressable>
+          <Pressable
             style={styles.itemNav}
-            activeOpacity={0.7}
-            onPress={() => handleNavigation("profile")}
+            onPress={() => navegar('ConteudosAvaliados')}
+            accessibilityLabel="Conteúdos avaliados"
+          >
+            <Feather name="check" size={29} color={primary} />
+          </Pressable>
+          <Pressable
+            style={styles.itemNav}
+            onPress={() => navegar('Perfil')}
             accessibilityLabel="Perfil"
           >
-            <Ionicons
-              name="person-outline"
-              size={24}
-              color="#953CFD"
-            />
-          </TouchableOpacity>
+            <Ionicons name="person-outline" size={29} color={primary} />
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
@@ -267,94 +344,59 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#000000",
   },
 
   screen: {
     flex: 1,
-    backgroundColor: "#000000",
     paddingTop: 8,
   },
 
   header: {
-    height: 96,
-    justifyContent: "center",
-    alignItems: "center",
+    height: 82,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   backButton: {
-    position: "absolute",
-    left: 39,
-    top: 3,
-    width: 34,
-    height: 42,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 2,
-  },
-
-  backArrow: {
-    color: "#953CFD",
-    fontSize: 47,
-    fontWeight: "300",
-    lineHeight: 48,
-    marginTop: -5,
-  },
-
-  logoContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    position: 'absolute',
+    left: 20,
+    top: 20,
+    zIndex: 1,
+    padding: 4,
   },
 
   logo: {
-    fontSize: 53,
-    fontWeight: "900",
-    fontStyle: "italic",
-    letterSpacing: -3.5,
-    textAlign: "center",
-    textShadowColor: "#6723AD",
-    textShadowOffset: { width: 2, height: 3 },
-    textShadowRadius: 3,
-  },
-
-  logoPop: {
-    color: "#FFCB24",
-  },
-
-  logoMovie: {
-    color: "#FFFFFF",
+    width: 180,
+    height: 75,
   },
 
   heading: {
-    color: "#FFFFFF",
-    fontSize: 36,
-    fontWeight: "700",
-    textAlign: "center",
-    marginTop: 4,
-    marginBottom: 24,
+    fontSize: 30,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 5,
+    marginBottom: 18,
   },
 
   searchBar: {
-    height: 56,
+    minHeight: 54,
     borderWidth: 1,
-    borderColor: "#C51AFF",
-    borderRadius: 19,
-    backgroundColor: "#09000D",
-    marginHorizontal: 23,
-    flexDirection: "row",
-    alignItems: "center",
+    borderRadius: 18,
+    marginHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 15,
-    marginBottom: 19,
+    marginBottom: 14,
   },
 
   searchIcon: {
-    marginRight: 12,
+    marginRight: 11,
   },
 
   searchInput: {
     flex: 1,
-    height: "100%",
-    color: "#FFFFFF",
+    minWidth: 0,
+    height: 52,
     fontSize: 16,
     paddingHorizontal: 0,
   },
@@ -364,133 +406,118 @@ const styles = StyleSheet.create({
   },
 
   movieList: {
-    paddingHorizontal: 23,
-    paddingBottom: 80,
-    gap: 19,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 78,
+    gap: 13,
+  },
+
+  feedback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 36,
+    gap: 12,
+  },
+
+  feedbackText: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 21,
+  },
+
+  retryButton: {
+    minHeight: 42,
+    borderRadius: 22,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+
+  retryText: {
+    color: COLORS.white,
+    fontWeight: '700',
   },
 
   movieCard: {
-    minHeight: 144,
+    minHeight: 126,
     borderWidth: 1,
-    borderColor: "#C51AFF",
-    borderRadius: 21,
-    backgroundColor: "#09000D",
-    padding: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    overflow: "hidden",
+    borderRadius: 17,
+    backgroundColor: '#121215',
+    padding: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   poster: {
-    width: 88,
-    height: 128,
-    borderRadius: 11,
-    backgroundColor: "#21142B",
-    marginLeft: 7,
+    width: 75,
+    height: 108,
+    borderRadius: 10,
+    backgroundColor: '#242424',
+  },
+
+  posterFallback: {
+    width: 75,
+    height: 108,
+    borderRadius: 10,
+    backgroundColor: '#242424',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   movieInfo: {
     flex: 1,
     minWidth: 0,
-    justifyContent: "center",
-    marginLeft: 16,
+    justifyContent: 'center',
+    marginLeft: 13,
+    marginRight: 5,
   },
 
   movieTitle: {
-    color: "#FFFFFF",
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 3,
-  },
-
-  movieYear: {
-    color: "#D0C9D3",
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 17,
+    fontWeight: '700',
     marginBottom: 5,
   },
 
-  ratingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
+  movieYear: {
+    fontSize: 14,
+    marginBottom: 6,
   },
 
-  ratingStar: {
-    color: "#FFD400",
-    fontSize: 25,
-    lineHeight: 28,
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
 
   ratingText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 14,
   },
 
-  actions: {
-    alignSelf: "stretch",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 4,
-    marginRight: 1,
-    gap: 4,
-  },
-
-  featureButton: {
-    width: 40,
-    height: 50,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  featureButtonHidden: {
-    width: 0,
-    overflow: "hidden",
-  },
-
-  featureStar: {
-    color: "#A32CFF",
-    fontSize: 49,
-    lineHeight: 54,
-    fontWeight: "400",
-  },
-
-  heartButton: {
-    width: 38,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  emptyMessage: {
-    color: "#D0C9D3",
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 30,
+  favoriteButton: {
+    width: 36,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   barraNavegacao: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    backgroundColor: "#0A0A0C",
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: "#1F1F23",
     height: 60,
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 10,
   },
 
   itemNav: {
     flex: 1,
     height: 60,
-    padding: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

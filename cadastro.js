@@ -9,14 +9,16 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { COLORS, commonStyles } from './theme';
+import { COLORS, commonStyles, useTheme } from './theme';
 
 export default function CadastroScreen({ navigation }) {
+  const { background, primary, text } = useTheme();
+
   return (
-    <View style={commonStyles.container}>
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
       <StatusBar
-        backgroundColor="#000000"
-        barStyle="light-content"
+        backgroundColor={background}
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
       />
 
       <ScrollView
@@ -29,7 +31,7 @@ export default function CadastroScreen({ navigation }) {
           accessibilityLabel="Voltar"
           onPress={() => navigation.goBack()}
         >
-          <Text style={commonStyles.backArrow}>‹</Text>
+          <Text style={[commonStyles.backArrow, { color: primary }]}>‹</Text>
         </Pressable>
 
         <View style={styles.logoContainer}>
@@ -39,28 +41,33 @@ export default function CadastroScreen({ navigation }) {
           />
         </View>
 
-        <Text style={commonStyles.title}>Cadastro</Text>
+        <Text style={[commonStyles.title, { color: text }]}>Cadastro</Text>
 
         <View style={styles.form}>
-          <Text style={commonStyles.label}>APELIDO</Text>
+          <Text style={[commonStyles.label, { color: text }]}>APELIDO</Text>
           <TextInput style={commonStyles.input} autoCapitalize="none" />
 
-          <Text style={commonStyles.label}>E-MAIL</Text>
+          <Text style={[commonStyles.label, { color: text }]}>E-MAIL</Text>
           <TextInput
             style={commonStyles.input}
             keyboardType="email-address"
             autoCapitalize="none"
           />
 
-          <Text style={commonStyles.label}>SENHA</Text>
+          <Text style={[commonStyles.label, { color: text }]}>SENHA</Text>
           <TextInput style={commonStyles.input} secureTextEntry />
 
-          <Text style={commonStyles.label}>CONFIRMAR SENHA</Text>
+          <Text style={[commonStyles.label, { color: text }]}>
+            CONFIRMAR SENHA
+          </Text>
           <TextInput style={commonStyles.input} secureTextEntry />
         </View>
 
         <Pressable
-          style={commonStyles.primaryButton}
+          style={[
+            commonStyles.primaryButton,
+            { backgroundColor: primary, shadowColor: primary },
+          ]}
           onPress={() => navigation.navigate('CadastroFavoritos')}
         >
           <Text style={commonStyles.primaryButtonText}>Adicionar favoritos</Text>

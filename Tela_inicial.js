@@ -1,10 +1,12 @@
 import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, commonStyles } from './theme';
+import { COLORS, commonStyles, useTheme } from './theme';
 
 export default function TelaInicial({ navigation }) {
+  const { background, primary, text } = useTheme();
+
   return (
-    <View style={commonStyles.container}>
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
       <View style={styles.conteudo}>
         <Image
           style={styles.logoGrande}
@@ -12,16 +14,19 @@ export default function TelaInicial({ navigation }) {
           resizeMode="contain"
         />
         <View style={styles.textoContainer}>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: text }]}>
             Não sabe o que assistir?{"\n"}
-            Deixe o <Text style={styles.destaque}>PopMovie</Text> decidir!
+            Deixe o <Text style={[styles.destaque, { color: primary }]}>PopMovie</Text> decidir!
           </Text>
         </View>
       </View>
 
       <View style={styles.botoes}>
         <Pressable
-          style={commonStyles.primaryButton}
+          style={[
+            commonStyles.primaryButton,
+            { backgroundColor: primary, shadowColor: primary },
+          ]}
           onPress={() => navigation.navigate('Login')}
         >
           <View style={styles.conteudoBotao}>
@@ -31,7 +36,10 @@ export default function TelaInicial({ navigation }) {
         </Pressable>
 
         <Pressable
-          style={commonStyles.primaryButton}
+          style={[
+            commonStyles.primaryButton,
+            { backgroundColor: primary, shadowColor: primary },
+          ]}
           onPress={() => navigation.navigate('Cadastro')}
         >
           <Text style={commonStyles.primaryButtonText}>Realizar cadastro</Text>

@@ -12,7 +12,7 @@ import {
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { COLORS } from './theme';
+import { COLORS, useTheme } from './theme';
 import { isInWatchlist, toggleWatchlist } from './watchlistStore';
 import { getMovieRating, setMovieRating } from './evaluatedStore';
 import { isMovieBlocked, toggleMovieBlocked } from './blockedStore';
@@ -21,6 +21,14 @@ import { isMovieFavorite, toggleFavoriteMovie } from './favoriteMoviesStore';
 const API_KEY = '0d335050c2cc3308096c03300829a424';
 
 export default function DetalhesFilme() {
+  const {
+    background,
+    border,
+    primary,
+    surfaceElevated,
+    text,
+    textSoft,
+  } = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
 
@@ -114,9 +122,9 @@ export default function DetalhesFilme() {
 
   if (carregando) {
     return (
-      <View style={styles.carregando}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.textoCarregando}>
+      <View style={[styles.carregando, { backgroundColor: background }]}>
+        <ActivityIndicator size="large" color={primary} />
+        <Text style={[styles.textoCarregando, { color: text }]}>
           Carregando filme...
         </Text>
       </View>
@@ -125,12 +133,15 @@ export default function DetalhesFilme() {
 
   if (!filme) {
     return (
-      <View style={styles.carregando}>
-        <Text style={styles.erro}>
+      <View style={[styles.carregando, { backgroundColor: background }]}>
+        <Text style={[styles.erro, { color: text }]}>
           Não foi possível encontrar esse filme.
         </Text>
 
-        <Pressable style={styles.botaoVoltarErro} onPress={voltar}>
+        <Pressable
+          style={[styles.botaoVoltarErro, { backgroundColor: primary }]}
+          onPress={voltar}
+        >
           <Text style={styles.textoBotaoVoltar}>Voltar</Text>
         </Pressable>
       </View>
@@ -138,7 +149,7 @@ export default function DetalhesFilme() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: background }]}>
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -157,7 +168,7 @@ export default function DetalhesFilme() {
               <Ionicons
                 name="film-outline"
                 size={60}
-                color={COLORS.primary}
+                color={primary}
               />
             </View>
           )}
@@ -169,21 +180,21 @@ export default function DetalhesFilme() {
             <Ionicons
               name="chevron-back"
               size={42}
-              color={COLORS.primary}
+              color={primary}
             />
           </Pressable>
         </View>
 
         {/* Título e nota */}
         <View style={styles.linhaTitulo}>
-          <Text style={styles.titulo}>
+          <Text style={[styles.titulo, { color: text }]}>
             {filme.title || filme.original_title}
           </Text>
 
           <View style={styles.nota}>
             <Ionicons name="star" size={27} color="#FFD500" />
 
-            <Text style={styles.textoNota}>
+            <Text style={[styles.textoNota, { color: text }]}>
               {filme.vote_average
                 ? filme.vote_average.toFixed(1)
                 : 'N/A'}
@@ -196,6 +207,8 @@ export default function DetalhesFilme() {
           {[1, 2, 3, 4, 5].map((estrela) => (
             <Pressable
               key={estrela}
+              accessibilityRole="button"
+              accessibilityLabel={`Avaliar com ${estrela} ${estrela === 1 ? 'estrela' : 'estrelas'}`}
               onPress={() => {
                 setMovieRating(filme, estrela);
                 setNotaUsuario(estrela);
@@ -208,21 +221,39 @@ export default function DetalhesFilme() {
                     : 'star-outline'
                 }
                 size={48}
-                color={COLORS.primary}
+                color={primary}
               />
             </Pressable>
           ))}
         </View>
+        {notaUsuario > 0 && (
+          <Pressable
+            style={styles.removerAvaliacao}
+            accessibilityRole="button"
+            accessibilityLabel="Remover avaliação"
+            onPress={() => {
+              setMovieRating(filme, 0);
+              setNotaUsuario(0);
+            }}
+          >
+            <Text style={[styles.textoRemoverAvaliacao, { color: textSoft }]}>
+              Remover avaliação
+            </Text>
+          </Pressable>
+        )}
 
         {/* Gêneros */}
         <View style={styles.generos}>
-          <View style={styles.etiqueta}>
-            <Text style={styles.textoEtiqueta}>Filme</Text>
+          <View style={[styles.etiqueta, { borderColor: primary }]}>
+            <Text style={[styles.textoEtiqueta, { color: text }]}>Filme</Text>
           </View>
 
           {generos.map((genero) => (
-            <View key={genero.id} style={styles.etiqueta}>
-              <Text style={styles.textoEtiqueta}>
+            <View
+              key={genero.id}
+              style={[styles.etiqueta, { borderColor: primary }]}
+            >
+              <Text style={[styles.textoEtiqueta, { color: text }]}>
                 {genero.name}
               </Text>
             </View>
@@ -230,13 +261,13 @@ export default function DetalhesFilme() {
         </View>
 
         {/* Ano e duração */}
-        <Text style={styles.informacoes}>
+        <Text style={[styles.informacoes, { color: textSoft }]}>
           {ano}
           {filme.runtime ? `  ·  ${filme.runtime} min` : ''}
         </Text>
 
         {/* Sinopse */}
-        <Text style={styles.sinopse}>
+        <Text style={[styles.sinopse, { color: text }]}>
           {filme.overview ||
             'Descrição indisponível para este filme.'}
         </Text>
@@ -244,7 +275,7 @@ export default function DetalhesFilme() {
         {/* Botões de ação */}
         <View style={styles.acoes}>
           <Pressable
-            style={styles.botaoAcao}
+            style={[styles.botaoAcao, { borderColor: primary }]}
             onPress={() => {
               const adicionou = toggleWatchlist(filme);
               setNaLista(adicionou);
@@ -259,16 +290,16 @@ export default function DetalhesFilme() {
             <Ionicons
               name="list"
               size={37}
-              color="white"
+              color={text}
             />
 
-            <Text style={styles.textoAcao}>
+            <Text style={[styles.textoAcao, { color: text }]}>
               {naLista ? 'Na lista' : 'Minha lista'}
             </Text>
           </Pressable>
 
           <Pressable
-            style={styles.botaoAcao}
+            style={[styles.botaoAcao, { borderColor: primary }]}
             onPress={() => {
               const ficouBloqueado = toggleMovieBlocked(filme);
               setBloqueado(ficouBloqueado);
@@ -283,16 +314,16 @@ export default function DetalhesFilme() {
             <Ionicons
               name={bloqueado ? 'lock-open' : 'lock-closed'}
               size={37}
-              color="white"
+              color={text}
             />
 
-            <Text style={styles.textoAcao}>
+            <Text style={[styles.textoAcao, { color: text }]}>
               {bloqueado ? 'Desbloquear' : 'Bloquear'}
             </Text>
           </Pressable>
 
           <Pressable
-            style={styles.botaoAcao}
+            style={[styles.botaoAcao, { borderColor: primary }]}
             onPress={() => {
               const ficouFavoritado = toggleFavoriteMovie(filme);
               setFavoritado(ficouFavoritado);
@@ -307,10 +338,10 @@ export default function DetalhesFilme() {
             <Ionicons
               name={favoritado ? 'heart' : 'heart-outline'}
               size={37}
-              color="white"
+              color={text}
             />
 
-            <Text style={styles.textoAcao}>
+            <Text style={[styles.textoAcao, { color: text }]}>
               {favoritado ? 'Favoritado' : 'Favoritar'}
             </Text>
           </Pressable>
@@ -318,48 +349,74 @@ export default function DetalhesFilme() {
       </ScrollView>
 
       {/* Menu inferior */}
-      <View style={styles.barraNavegacao}>
+      <View
+        style={[
+          styles.barraNavegacao,
+          { backgroundColor: surfaceElevated, borderTopColor: border },
+        ]}
+      >
         <Pressable
           style={styles.itemNav}
           onPress={() => navegar('Principal')}
+          accessibilityRole="button"
+          accessibilityLabel="Início"
         >
           <Ionicons
             name="home-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
+          />
+        </Pressable>
+
+        <Pressable
+          style={styles.itemNav}
+          onPress={() => navegar('Buscar')}
+          accessibilityRole="button"
+          accessibilityLabel="Buscar"
+        >
+          <Ionicons
+            name="search-outline"
+            size={29}
+            color={primary}
           />
         </Pressable>
 
         <Pressable
           style={styles.itemNav}
           onPress={() => navegar('MinhaLista')}
+          accessibilityRole="button"
+          accessibilityLabel="Minha lista"
         >
           <Ionicons
             name="list"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </Pressable>
 
         <Pressable
           style={styles.itemNav}
           onPress={() => navegar('ConteudosAvaliados')}
+          accessibilityRole="button"
+          accessibilityLabel="Conteúdos avaliados"
         >
           <Feather
             name="check"
             size={32}
-            color={COLORS.primary}
+            color={primary}
           />
         </Pressable>
 
         <Pressable
           style={styles.itemNav}
           onPress={() => navegar('Perfil')}
+          accessibilityRole="button"
+          accessibilityLabel="Perfil"
         >
           <Ionicons
             name="person-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </Pressable>
       </View>
@@ -370,7 +427,6 @@ export default function DetalhesFilme() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
   },
 
   scroll: {
@@ -414,7 +470,6 @@ const styles = StyleSheet.create({
   },
 
   titulo: {
-    color: 'white',
     fontSize: 29,
     flex: 1,
     marginRight: 8,
@@ -427,7 +482,6 @@ const styles = StyleSheet.create({
   },
 
   textoNota: {
-    color: 'white',
     fontSize: 23,
   },
 
@@ -438,6 +492,18 @@ const styles = StyleSheet.create({
     marginTop: 55,
     marginBottom: 40,
     paddingHorizontal: 15,
+  },
+
+  removerAvaliacao: {
+    alignSelf: 'center',
+    marginTop: -28,
+    marginBottom: 28,
+    padding: 8,
+  },
+
+  textoRemoverAvaliacao: {
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 
   generos: {
@@ -457,7 +523,6 @@ const styles = StyleSheet.create({
   },
 
   textoEtiqueta: {
-    color: 'white',
     fontSize: 17,
     fontWeight: '600',
   },
@@ -509,10 +574,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#202020',
     height: 65,
     borderTopWidth: 1,
-    borderTopColor: '#292929',
   },
 
   itemNav: {
@@ -524,19 +587,16 @@ const styles = StyleSheet.create({
 
   carregando: {
     flex: 1,
-    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   textoCarregando: {
-    color: 'white',
     marginTop: 12,
     fontSize: 16,
   },
 
   erro: {
-    color: 'white',
     fontSize: 18,
     textAlign: 'center',
     marginHorizontal: 25,
@@ -551,7 +611,6 @@ const styles = StyleSheet.create({
   },
 
   textoBotaoVoltar: {
-    color: 'white',
     fontSize: 16,
   },
 });

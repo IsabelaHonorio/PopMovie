@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from './theme';
 
 export default function AlterarAvatar({
   voltar,
@@ -17,6 +18,15 @@ export default function AlterarAvatar({
   setFotoPerfil,
   navigation,
 }) {
+  const {
+    background,
+    border,
+    primary,
+    primaryDark,
+    surface,
+    text,
+    textSoft,
+  } = useTheme();
   const avatares = [
     { id: '10', imagem: require('./assets/avatar/10.png') },
     { id: '11', imagem: require('./assets/avatar/11.png') },
@@ -51,10 +61,10 @@ export default function AlterarAvatar({
   };
 
   return (
-    <View style={estilos.conteiner}>
+    <View style={[estilos.conteiner, { backgroundColor: background }]}>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor="#000000"
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
+        backgroundColor={background}
       />
 
       {/* Cabeçalho */}
@@ -68,7 +78,7 @@ export default function AlterarAvatar({
           <Ionicons
             name="chevron-back"
             size={22}
-            color="#a855f7"
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -84,17 +94,22 @@ export default function AlterarAvatar({
         contentContainerStyle={estilos.conteudoRolagem}
       >
         {/* Título */}
-        <Text style={estilos.tituloTela}>
+        <Text style={[estilos.tituloTela, { color: primary }]}>
           Alterar foto de perfil
         </Text>
 
-        <Text style={estilos.descricao}>
+        <Text style={[estilos.descricao, { color: textSoft }]}>
           Escolha o avatar que mais combina com você!
         </Text>
 
         {/* Avatar selecionado */}
         <View style={estilos.secaoAvatarAtual}>
-          <View style={estilos.molduraAvatarAtual}>
+          <View
+            style={[
+              estilos.molduraAvatarAtual,
+              { borderColor: primary, backgroundColor: surface },
+            ]}
+          >
             <Image
               source={avatares[avatarSelecionado].imagem}
               style={estilos.fotoAvatarAtual}
@@ -102,7 +117,7 @@ export default function AlterarAvatar({
             />
           </View>
 
-          <Text style={estilos.etiquetaAtual}>
+          <Text style={[estilos.etiquetaAtual, { color: primary }]}>
             AVATAR SELECIONADO
           </Text>
         </View>
@@ -110,7 +125,7 @@ export default function AlterarAvatar({
         <View style={estilos.divisor} />
 
         {/* Opções */}
-        <Text style={estilos.subtituloOpcoes}>
+        <Text style={[estilos.subtituloOpcoes, { color: text }]}>
           Escolha seu novo avatar:
         </Text>
 
@@ -123,6 +138,12 @@ export default function AlterarAvatar({
                 estilos.itemAvatar,
                 avatarSelecionado === indice &&
                   estilos.avatarSelecionadoContainer,
+                avatarSelecionado === indice && {
+                  borderColor: primary,
+                  backgroundColor: primaryDark,
+                },
+                { backgroundColor: surface, borderColor: border },
+                avatarSelecionado === indice && { borderColor: primary, backgroundColor: primaryDark },
               ]}
               onPress={() => setAvatarSelecionado(indice)}
               activeOpacity={0.75}
@@ -134,7 +155,12 @@ export default function AlterarAvatar({
               />
 
               {avatarSelecionado === indice && (
-                <View style={estilos.marcaSelecao}>
+                <View
+                  style={[
+                    estilos.marcaSelecao,
+                    { backgroundColor: primary },
+                  ]}
+                >
                   <Ionicons
                     name="checkmark"
                     size={14}
@@ -148,7 +174,10 @@ export default function AlterarAvatar({
 
         {/* Confirmar */}
         <TouchableOpacity
-          style={estilos.botaoConfirmar}
+          style={[
+            estilos.botaoConfirmar,
+            { backgroundColor: primary },
+          ]}
           activeOpacity={0.8}
           onPress={confirmarAvatar}
         >
@@ -164,7 +193,6 @@ export default function AlterarAvatar({
 const estilos = StyleSheet.create({
   conteiner: {
     flex: 1,
-    backgroundColor: '#000000',
     paddingTop: 10,
   },
 
@@ -181,12 +209,10 @@ const estilos = StyleSheet.create({
     left: 20,
     width: 38,
     height: 38,
-    backgroundColor: '#121215',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#222226',
     zIndex: 1,
   },
 
@@ -210,7 +236,6 @@ const estilos = StyleSheet.create({
   },
 
   descricao: {
-    color: '#9ca3af',
     fontSize: 15,
     textAlign: 'center',
     marginBottom: 20,
@@ -231,7 +256,6 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     padding: 4,
     marginBottom: 10,
-    backgroundColor: '#121215',
     overflow: 'hidden',
   },
 
@@ -256,7 +280,6 @@ const estilos = StyleSheet.create({
   },
 
   subtituloOpcoes: {
-    color: '#ffffff',
     fontSize: 17,
     fontWeight: '600',
     alignSelf: 'flex-start',
@@ -278,9 +301,7 @@ const estilos = StyleSheet.create({
     borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121215',
     borderWidth: 2,
-    borderColor: '#29252f',
     padding: 3,
     position: 'relative',
   },
@@ -322,7 +343,6 @@ const estilos = StyleSheet.create({
   },
 
   textoBotaoConfirmar: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },

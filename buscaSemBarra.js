@@ -10,6 +10,7 @@ import {
   StatusBar,
   StyleSheet,
 } from "react-native";
+import { useTheme } from './theme';
 
 const MOVIES = [
   {
@@ -47,6 +48,7 @@ const MOVIES = [
 ];
 
 export default function BuscaSemBarra({ navigation, route }) {
+  const { background, primary, primaryDark, surface, text, textSoft } = useTheme();
   const { slotIndex } = route.params || {};
   const [search, setSearch] = useState("");
   const [favorites, setFavorites] = useState([]);
@@ -72,13 +74,13 @@ export default function BuscaSemBarra({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: background }]}>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor="#000000"
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
+        backgroundColor={background}
       />
 
-      <View style={styles.screen}>
+      <View style={[styles.screen, { backgroundColor: background }]}>
         {/* Cabeçalho */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -87,7 +89,7 @@ export default function BuscaSemBarra({ navigation, route }) {
             accessibilityLabel="Voltar"
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backArrow}>‹</Text>
+            <Text style={[styles.backArrow, { color: primary }]}>‹</Text>
           </TouchableOpacity>
 
           <View style={styles.logoContainer}>
@@ -98,19 +100,24 @@ export default function BuscaSemBarra({ navigation, route }) {
           </View>
         </View>
 
-        <Text style={styles.heading}>Buscar filmes</Text>
+        <Text style={[styles.heading, { color: text }]}>Buscar filmes</Text>
 
         {/* Barra de busca */}
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>⌕</Text>
+        <View
+          style={[
+            styles.searchBar,
+            { borderColor: primary, backgroundColor: surface },
+          ]}
+        >
+          <Text style={[styles.searchIcon, { color: primary }]}>⌕</Text>
 
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar filmes"
-            placeholderTextColor="#D1CCD4"
+            placeholderTextColor={textSoft}
             value={search}
             onChangeText={setSearch}
-            selectionColor="#B12AFF"
+            selectionColor={primary}
             returnKeyType="search"
           />
         </View>
@@ -128,7 +135,10 @@ export default function BuscaSemBarra({ navigation, route }) {
             return (
               <TouchableOpacity
                 key={movie.id}
-                style={styles.movieCard}
+                style={[
+                  styles.movieCard,
+                  { borderColor: primary, backgroundColor: surface },
+                ]}
                 activeOpacity={0.85}
                 onPress={() => selecionarFilme(movie)}
               >
@@ -140,19 +150,19 @@ export default function BuscaSemBarra({ navigation, route }) {
 
                 <View style={styles.movieInfo}>
                   <Text
-                    style={styles.movieTitle}
+                    style={[styles.movieTitle, { color: text }]}
                     numberOfLines={1}
                   >
                     {movie.title}
                   </Text>
 
-                  <Text style={styles.movieYear}>
+                  <Text style={[styles.movieYear, { color: textSoft }]}>
                     ({movie.year})
                   </Text>
 
                   <View style={styles.ratingRow}>
                     <Text style={styles.ratingStar}>★</Text>
-                    <Text style={styles.ratingText}>
+                    <Text style={[styles.ratingText, { color: text }]}>
                       {movie.rating}
                     </Text>
                   </View>
@@ -169,7 +179,7 @@ export default function BuscaSemBarra({ navigation, route }) {
                     accessibilityLabel="Destacar filme"
                   >
                     {isFeatured && (
-                      <Text style={styles.featureStar}>☆</Text>
+                      <Text style={[styles.featureStar, { color: primary }]}>☆</Text>
                     )}
                   </TouchableOpacity>
 
@@ -185,6 +195,7 @@ export default function BuscaSemBarra({ navigation, route }) {
                       style={[
                         styles.heart,
                         isFavorite && styles.heartActive,
+                        { color: isFavorite ? primaryDark : primary },
                       ]}
                     >
                       {isFavorite ? "♥" : "♡"}
@@ -196,7 +207,7 @@ export default function BuscaSemBarra({ navigation, route }) {
           })}
 
           {filteredMovies.length === 0 && (
-            <Text style={styles.emptyMessage}>
+            <Text style={[styles.emptyMessage, { color: textSoft }]}>
               Nenhum filme encontrado.
             </Text>
           )}

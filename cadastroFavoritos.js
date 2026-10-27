@@ -11,8 +11,10 @@ import {
 } from "react-native";
 
 import { getFavorites, setFavoriteAt } from './favoritesStore';
+import { useTheme } from './theme';
 
 export default function App({ navigation, route }) {
+  const { background, primary, primaryDark, text } = useTheme();
   const [favorites, setFavorites] = useState(getFavorites());
 
   useEffect(() => {
@@ -42,24 +44,24 @@ export default function App({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: background }]}>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor="#000000"
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
+        backgroundColor={background}
       />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
           {/* Botão voltar */}
           <TouchableOpacity
             style={styles.backButton}
             onPress={handleBack}
             activeOpacity={0.7}
           >
-            <Text style={styles.backArrow}>‹</Text>
+            <Text style={[styles.backArrow, { color: primary }]}>‹</Text>
           </TouchableOpacity>
 
           {/* Logo PopMovie */}
@@ -73,7 +75,7 @@ export default function App({ navigation, route }) {
 
           {/* Conteúdos favoritos */}
           <View style={styles.favoritesSection}>
-            <Text style={styles.heading}>
+            <Text style={[styles.heading, { color: text }]}>
               Conteúdos favoritos:
             </Text>
 
@@ -81,7 +83,14 @@ export default function App({ navigation, route }) {
               {favorites.map((favorite, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={styles.favoriteSlot}
+                  style={[
+                    styles.favoriteSlot,
+                    {
+                      shadowColor: primary,
+                      borderColor: primary,
+                      backgroundColor: background,
+                    },
+                  ]}
                   onPress={() => handleAddFavorite(index)}
                   activeOpacity={0.75}
                   accessibilityLabel={`Adicionar favorito ${index + 1}`}
@@ -104,7 +113,10 @@ export default function App({ navigation, route }) {
 
             {/* Botão cadastrar */}
             <TouchableOpacity
-              style={styles.registerButton}
+              style={[
+                styles.registerButton,
+                { backgroundColor: primary, shadowColor: primaryDark },
+              ]}
               onPress={handleRegister}
               activeOpacity={0.8}
             >
@@ -199,6 +211,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+    borderWidth: 1,
 
     shadowColor: "#9B7BFF",
     shadowOffset: { width: 0, height: 3 },
@@ -240,7 +253,6 @@ const styles = StyleSheet.create({
     width: 248,
     height: 64,
     borderRadius: 36,
-    backgroundColor: "#9638FF",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 37,

@@ -11,10 +11,18 @@ import {
 
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS, commonStyles } from './theme';
+import { COLORS, commonStyles, useTheme } from './theme';
 import { getWatchlist } from './watchlistStore';
 
 export default function MinhaListaScreen({ navigation, route }) {
+  const {
+    background,
+    border,
+    primary,
+    surfaceElevated,
+    text,
+    textSoft,
+  } = useTheme();
   const { apelido, senha } = route.params || {};
   const [search, setSearch] = useState('');
   const [filmes, setFilmes] = useState(getWatchlist());
@@ -32,7 +40,7 @@ export default function MinhaListaScreen({ navigation, route }) {
   );
 
   return (
-    <View style={commonStyles.container}>
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
       {/* Logo na parte superior */}
       <View style={styles.areaSuperior}>
         <Image
@@ -43,7 +51,7 @@ export default function MinhaListaScreen({ navigation, route }) {
       </View>
 
       {/* Título abaixo da logo */}
-      <Text style={commonStyles.title}>Minha Lista</Text>
+      <Text style={[commonStyles.title, { color: text }]}>Minha Lista</Text>
 
       {/* Desenho e frases abaixo do título */}
       <View style={styles.cabecalhoLista}>
@@ -54,11 +62,11 @@ export default function MinhaListaScreen({ navigation, route }) {
         />
 
         <View style={styles.frases}>
-          <Text style={styles.text}>
+          <Text style={[styles.text, { color: text }]}>
             Sua lista de assistir mais tarde.
           </Text>
 
-          <Text style={styles.text}>
+          <Text style={[styles.text, { color: text }]}>
             Assista quando quiser!
           </Text>
         </View>
@@ -75,12 +83,13 @@ export default function MinhaListaScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
         indicatorStyle="white"
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: textSoft }]}>
             Nenhum filme encontrado.
           </Text>
         }
         renderItem={({ item }) => (
           <TouchableOpacity
+            style={styles.itemFilme}
             activeOpacity={0.8}
             onPress={() =>
               navigation.navigate('DetalhesFilme', {
@@ -104,13 +113,18 @@ export default function MinhaListaScreen({ navigation, route }) {
       />
 
       {/* Barra de navegação inferior */}
-      <View style={styles.barraNavegacao}>
+      <View
+        style={[
+          styles.barraNavegacao,
+          { backgroundColor: surfaceElevated, borderTopColor: border },
+        ]}
+      >
         <TouchableOpacity
           style={styles.itemNav}
           activeOpacity={0.7}
           onPress={() => navigation.navigate('Principal', { apelido, senha })}
         >
-          <Ionicons name="home-outline" size={29} color={COLORS.primary} />
+          <Ionicons name="home-outline" size={29} color={primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -118,7 +132,7 @@ export default function MinhaListaScreen({ navigation, route }) {
           activeOpacity={0.7}
           onPress={() => navigation.navigate('Buscar', { apelido, senha })}
         >
-          <Ionicons name="search-outline" size={29} color={COLORS.primary} />
+          <Ionicons name="search-outline" size={29} color={primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -126,7 +140,7 @@ export default function MinhaListaScreen({ navigation, route }) {
           activeOpacity={0.7}
           onPress={() => navigation.navigate('MinhaLista', { apelido, senha })}
         >
-          <Ionicons name="list-outline" size={29} color={COLORS.primary} />
+          <Ionicons name="list-outline" size={29} color={primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -136,7 +150,7 @@ export default function MinhaListaScreen({ navigation, route }) {
             navigation.navigate('ConteudosAvaliados', { apelido, senha })
           }
         >
-          <Feather name="check" size={29} color={COLORS.primary} />
+          <Feather name="check" size={29} color={primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -144,7 +158,7 @@ export default function MinhaListaScreen({ navigation, route }) {
           activeOpacity={0.7}
           onPress={() => navigation.navigate('Perfil', { apelido, senha })}
         >
-          <Ionicons name="person-outline" size={29} color={COLORS.primary} />
+          <Ionicons name="person-outline" size={29} color={primary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -226,8 +240,11 @@ const styles = StyleSheet.create({
   },
 
   columnWrapper: {
-    justifyContent: 'space-between',
     marginBottom: 18,
+  },
+
+  itemFilme: {
+    width: '33.333%',
   },
 
   poster: {

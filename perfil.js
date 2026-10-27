@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { COLORS, commonStyles } from './theme';
+import { COLORS, commonStyles, useTheme } from './theme';
 
 import AlterarSenha from './alterar_senha';
 import Bloqueados from './bloqueados';
@@ -24,6 +24,15 @@ import {
 } from './favoriteMoviesStore';
 
 export default function PerfilScreen({ navigation, route }) {
+  const {
+    background,
+    border,
+    primary,
+    surface,
+    surfaceElevated,
+    text,
+    textSoft,
+  } = useTheme();
   const { apelido, senha } = route.params || {};
 
   const [telaAtual, setTelaAtual] = useState('Perfil');
@@ -71,10 +80,10 @@ export default function PerfilScreen({ navigation, route }) {
   }
 
   return (
-    <View style={commonStyles.container}>
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor="#000000"
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
+        backgroundColor={background}
       />
 
       {/* LOGO PADRONIZADA */}
@@ -94,24 +103,24 @@ export default function PerfilScreen({ navigation, route }) {
         <View style={estilos.secaoPerfil}>
           <Image
             source={fotoPerfil}
-            style={estilos.fotoPerfil}
+            style={[estilos.fotoPerfil, { borderColor: primary }]}
           />
 
           <View style={estilos.infoPerfil}>
-            <Text style={estilos.saudacao}>
+            <Text style={[estilos.saudacao, { color: primary }]}>
               Olá, {apelido || 'Fulano'}!
             </Text>
 
             <TouchableOpacity
               onPress={() => setTelaAtual('AlterarAvatar')}
               activeOpacity={0.7}
-              style={estilos.botaoEditar}
+              style={[estilos.botaoEditar, { backgroundColor: surface }]}
               accessibilityLabel="Alterar avatar"
             >
               <Feather
                 name="edit-2"
                 size={18}
-                color={COLORS.primary}
+                color={primary}
               />
             </TouchableOpacity>
           </View>
@@ -124,13 +133,13 @@ export default function PerfilScreen({ navigation, route }) {
             activeOpacity={0.7}
             onPress={() => setTelaAtual('AlterarSenha')}
           >
-            <Text style={estilos.textoOpcao}>Alterar senha</Text>
+            <Text style={[estilos.textoOpcao, { color: text }]}>Alterar senha</Text>
 
-            <View style={estilos.acaoOpcao}>
+            <View style={[estilos.acaoOpcao, { backgroundColor: surface }]}>
               <Feather
                 name="edit-2"
                 size={15}
-                color={COLORS.primary}
+                color={primary}
               />
             </View>
           </TouchableOpacity>
@@ -140,13 +149,13 @@ export default function PerfilScreen({ navigation, route }) {
             activeOpacity={0.7}
             onPress={() => setTelaAtual('AlterarTema')}
           >
-            <Text style={estilos.textoOpcao}>Alterar tema</Text>
+            <Text style={[estilos.textoOpcao, { color: text }]}>Alterar tema</Text>
 
-            <View style={estilos.acaoOpcao}>
+            <View style={[estilos.acaoOpcao, { backgroundColor: surface }]}>
               <Feather
                 name="edit-2"
                 size={15}
-                color={COLORS.primary}
+                color={primary}
               />
             </View>
           </TouchableOpacity>
@@ -156,24 +165,25 @@ export default function PerfilScreen({ navigation, route }) {
             activeOpacity={0.7}
             onPress={() => setTelaAtual('Bloqueados')}
           >
-            <Text style={estilos.textoOpcao}>
+            <Text style={[estilos.textoOpcao, { color: text }]}>
               Conteúdos bloqueados
             </Text>
 
-            <View style={estilos.acaoOpcao}>
+            <View style={[estilos.acaoOpcao, { backgroundColor: surface }]}>
               <Feather
                 name="edit-2"
                 size={15}
-                color={COLORS.primary}
+                color={primary}
               />
             </View>
           </TouchableOpacity>
         </View>
 
         {/* FILMES FAVORITOS */}
-        <Text style={estilos.tituloSecao}>Favoritos</Text>
+        <Text style={[estilos.tituloSecao, { color: text }]}>Favoritos</Text>
 
         <FlatList
+          style={estilos.listaFavoritos}
           data={filmesFavoritos}
           keyExtractor={(item) => String(item.id)}
           numColumns={3}
@@ -181,7 +191,7 @@ export default function PerfilScreen({ navigation, route }) {
           contentContainerStyle={estilos.listaFilmes}
           scrollEnabled={false}
           ListEmptyComponent={
-            <Text style={estilos.mensagemVazia}>
+            <Text style={[estilos.mensagemVazia, { color: textSoft }]}>
               Você ainda não tem filmes favoritos.
             </Text>
           }
@@ -211,7 +221,7 @@ export default function PerfilScreen({ navigation, route }) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={estilos.botaoFavorito}
+                style={[estilos.botaoFavorito, { backgroundColor: primary }]}
                 onPress={() => toggleFavoriteMovie(item)}
                 activeOpacity={0.7}
                 accessibilityLabel={`Remover ${item.title || item.original_title || item.nome || 'filme'} dos favoritos`}
@@ -228,7 +238,12 @@ export default function PerfilScreen({ navigation, route }) {
       </ScrollView>
 
       {/* BARRA DE NAVEGAÇÃO INFERIOR */}
-      <View style={estilos.barraNavegacao}>
+      <View
+        style={[
+          estilos.barraNavegacao,
+          { backgroundColor: surfaceElevated, borderTopColor: border },
+        ]}
+      >
         <TouchableOpacity
           style={estilos.itemNav}
           activeOpacity={0.7}
@@ -239,7 +254,7 @@ export default function PerfilScreen({ navigation, route }) {
           <Ionicons
             name="home-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -253,7 +268,7 @@ export default function PerfilScreen({ navigation, route }) {
           <Ionicons
             name="search-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -267,7 +282,7 @@ export default function PerfilScreen({ navigation, route }) {
           <Ionicons
             name="list-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -281,7 +296,7 @@ export default function PerfilScreen({ navigation, route }) {
           <Feather
             name="check"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -295,7 +310,7 @@ export default function PerfilScreen({ navigation, route }) {
           <Ionicons
             name="person-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
       </View>
@@ -407,13 +422,16 @@ const estilos = StyleSheet.create({
     paddingTop: 6,
   },
 
+  listaFavoritos: {
+    marginHorizontal: -15,
+  },
+
   columnWrapper: {
-    justifyContent: 'space-between',
     marginBottom: 18,
   },
 
   cartaoFilme: {
-    width: 96,
+    width: '33.333%',
     height: 146,
     position: 'relative',
     marginBottom: 0,

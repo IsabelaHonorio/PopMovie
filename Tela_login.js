@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, Image, TextInput, Pressable } from 'react-native';
-import { COLORS, commonStyles } from './theme';
+import { COLORS, commonStyles, useTheme } from './theme';
 
 export default function TelaLogin({ navigation }) {
+  const { background, primary, text, textSoft } = useTheme();
   const [apelido, setApelido] = useState('');
   const [senha, setSenha] = useState('');
 
@@ -14,13 +15,13 @@ export default function TelaLogin({ navigation }) {
   };
 
   return (
-    <View style={commonStyles.container}>
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
       <Pressable
         style={styles.backButton}
         onPress={() => navigation.goBack()}
         activeOpacity={0.7}
       >
-        <Text style={styles.backArrow}>‹</Text>
+        <Text style={[styles.backArrow, { color: primary }]}>‹</Text>
       </Pressable>
 
       <View style={styles.logoContainer}>
@@ -30,10 +31,10 @@ export default function TelaLogin({ navigation }) {
         />
       </View>
 
-      <Text style={commonStyles.title}>Login</Text>
+      <Text style={[commonStyles.title, { color: text }]}>Login</Text>
       
       <View style={styles.form}>
-        <Text style={commonStyles.label}>APELIDO</Text>
+        <Text style={[commonStyles.label, { color: text }]}>APELIDO</Text>
         <TextInput
           style={commonStyles.input}
           value={apelido}
@@ -41,7 +42,7 @@ export default function TelaLogin({ navigation }) {
           autoCapitalize="none"
         />
 
-        <Text style={commonStyles.label}>SENHA</Text>
+        <Text style={[commonStyles.label, { color: text }]}>SENHA</Text>
         <TextInput
           style={commonStyles.input}
           secureTextEntry
@@ -50,9 +51,17 @@ export default function TelaLogin({ navigation }) {
         />
       </View>
 
-      <Text style={styles.esqueceuSenha}>Esqueceu a senha?</Text>
+      <Text style={[styles.esqueceuSenha, { color: textSoft }]}>
+        Esqueceu a senha?
+      </Text>
 
-      <Pressable style={commonStyles.primaryButton} onPress={entrar}>
+      <Pressable
+        style={[
+          commonStyles.primaryButton,
+          { backgroundColor: primary, shadowColor: primary },
+        ]}
+        onPress={entrar}
+      >
         <Text style={commonStyles.primaryButtonText}>Entrar</Text>
       </Pressable>
     </View>

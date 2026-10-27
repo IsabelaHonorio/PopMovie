@@ -1,8 +1,15 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { COLORS, commonStyles } from './theme';
+import { COLORS, commonStyles, useTheme } from './theme';
 
 export default function TelaPrincipal({ navigation, route }) {
+  const { background, primary, text, textSoft, surfaceElevated, border } = useTheme();
   const { apelido, senha } = route.params || {};
 
   const irParaMinhaLista = () =>
@@ -18,10 +25,14 @@ export default function TelaPrincipal({ navigation, route }) {
     navigation.navigate('Filtros', { apelido, senha });
 
   const irParaSorteio = () =>
-    navigation.navigate('ConteudoSorteado');
+    navigation.navigate('ConteudoSorteado', {
+      apelido,
+      senha,
+      sorteioId: Date.now(),
+    });
 
   return (
-    <View style={commonStyles.container}>
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
       {/* Logo na parte superior */}
       <View style={styles.areaSuperior}>
         <Image
@@ -33,11 +44,11 @@ export default function TelaPrincipal({ navigation, route }) {
 
       {/* Conteúdo principal */}
       <View style={styles.centralArea}>
-        <Text style={styles.title}>
+        <Text style={[styles.title, { color: text }]}>
           Olá, {apelido || 'Fulano'}!
         </Text>
 
-        <Text style={styles.text}>
+        <Text style={[styles.text, { color: textSoft }]}>
           O que vamos assistir hoje?
         </Text>
 
@@ -48,7 +59,11 @@ export default function TelaPrincipal({ navigation, route }) {
         />
 
         <TouchableOpacity
-          style={[commonStyles.primaryButton, styles.botaoSortear]}
+          style={[
+            commonStyles.primaryButton,
+            styles.botaoSortear,
+            { backgroundColor: primary, shadowColor: primary },
+          ]}
           activeOpacity={0.8}
           onPress={irParaSorteio}
         >
@@ -75,7 +90,12 @@ export default function TelaPrincipal({ navigation, route }) {
       </View>
 
       {/* Barra de navegação inferior */}
-      <View style={styles.barraNavegacao}>
+      <View
+        style={[
+          styles.barraNavegacao,
+          { backgroundColor: surfaceElevated, borderTopColor: border },
+        ]}
+      >
         <TouchableOpacity
           style={styles.itemNav}
           activeOpacity={0.7}
@@ -86,7 +106,7 @@ export default function TelaPrincipal({ navigation, route }) {
           <Ionicons
             name="home-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -100,7 +120,7 @@ export default function TelaPrincipal({ navigation, route }) {
           <Ionicons
             name="search-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -112,7 +132,7 @@ export default function TelaPrincipal({ navigation, route }) {
           <Ionicons
             name="list-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -124,7 +144,7 @@ export default function TelaPrincipal({ navigation, route }) {
           <Feather
             name="check"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -136,10 +156,11 @@ export default function TelaPrincipal({ navigation, route }) {
           <Ionicons
             name="person-outline"
             size={29}
-            color={COLORS.primary}
+            color={primary}
           />
         </TouchableOpacity>
       </View>
+
     </View>
   );
 }
