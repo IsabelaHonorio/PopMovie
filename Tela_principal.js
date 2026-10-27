@@ -5,59 +5,139 @@ import { COLORS, commonStyles } from './theme';
 export default function TelaPrincipal({ navigation, route }) {
   const { apelido, senha } = route.params || {};
 
-  const irParaMinhaLista = () => navigation.navigate('MinhaLista', { apelido, senha });
-  const irParaConteudosAvaliados = () => navigation.navigate('ConteudosAvaliados', { apelido, senha });
-  const irParaPerfil = () => navigation.navigate('Perfil', { apelido, senha });
-  const irParaFiltros = () => navigation.navigate('Filtros', { apelido, senha });
-  const irParaSorteio = () => navigation.navigate('ConteudoSorteado');
+  const irParaMinhaLista = () =>
+    navigation.navigate('MinhaLista', { apelido, senha });
+
+  const irParaConteudosAvaliados = () =>
+    navigation.navigate('ConteudosAvaliados', { apelido, senha });
+
+  const irParaPerfil = () =>
+    navigation.navigate('Perfil', { apelido, senha });
+
+  const irParaFiltros = () =>
+    navigation.navigate('Filtros', { apelido, senha });
+
+  const irParaSorteio = () =>
+    navigation.navigate('ConteudoSorteado');
 
   return (
     <View style={commonStyles.container}>
-        <View style={styles.areaSuperior}>
+      {/* Logo na parte superior */}
+      <View style={styles.areaSuperior}>
         <Image
           source={require('./assets/PopMovielogo.png')}
           style={styles.imagem_inicial}
+          resizeMode="contain"
         />
-        </View>
-      <View style={styles.centralArea}>
-        
+      </View>
 
-        <Text style={styles.title}>Olá, {apelido || 'Pedro'}!</Text>
-        <Text style={styles.text}>O que vamos assistir hoje?</Text>
+      {/* Conteúdo principal */}
+      <View style={styles.centralArea}>
+        <Text style={styles.title}>
+          Olá, {apelido || 'Fulano'}!
+        </Text>
+
+        <Text style={styles.text}>
+          O que vamos assistir hoje?
+        </Text>
 
         <Image
           source={require('./assets/tela_inicial.png')}
           style={styles.image}
+          resizeMode="contain"
         />
 
-        <TouchableOpacity style={[commonStyles.primaryButton, styles.botaoSortear]} activeOpacity={0.8} onPress={irParaSorteio}>
-          <Text style={commonStyles.primaryButtonText}>Sortear</Text>
+        <TouchableOpacity
+          style={[commonStyles.primaryButton, styles.botaoSortear]}
+          activeOpacity={0.8}
+          onPress={irParaSorteio}
+        >
+          <Text style={commonStyles.primaryButtonText}>
+            Sortear
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.botao_filtros} activeOpacity={0.8} onPress={irParaFiltros}>
+        <TouchableOpacity
+          style={styles.botao_filtros}
+          activeOpacity={0.8}
+          onPress={irParaFiltros}
+        >
           <Image
             source={require('./assets/figura_botaoFiltros.png')}
             style={styles.imagem_filtros}
+            resizeMode="contain"
           />
-          <Text style={styles.botaoTexto_filtros}>Usar filtros</Text>
+
+          <Text style={styles.botaoTexto_filtros}>
+            Usar filtros
+          </Text>
         </TouchableOpacity>
       </View>
 
+      {/* Barra de navegação inferior */}
       <View style={styles.barraNavegacao}>
-        <TouchableOpacity style={styles.itemNav} activeOpacity={0.7} onPress={() => navigation.navigate('Principal', { apelido, senha })}>
-          <Ionicons name="home-outline" size={24} color={COLORS.primary} />
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate('Principal', { apelido, senha })
+          }
+        >
+          <Ionicons
+            name="home-outline"
+            size={29}
+            color={COLORS.primary}
+          />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.itemNav} activeOpacity={0.7} onPress={irParaMinhaLista}>
-          <Ionicons name="list-outline" size={24} color={COLORS.primary} />
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate('Buscar', { apelido, senha })
+          }
+        >
+          <Ionicons
+            name="search-outline"
+            size={29}
+            color={COLORS.primary}
+          />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.itemNav} activeOpacity={0.7} onPress={irParaConteudosAvaliados}>
-          <Feather name="check" size={24} color={COLORS.primary} />
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={irParaMinhaLista}
+        >
+          <Ionicons
+            name="list-outline"
+            size={29}
+            color={COLORS.primary}
+          />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.itemNav} activeOpacity={0.7} onPress={irParaPerfil}>
-          <Ionicons name="person-outline" size={24} color={COLORS.primary} />
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={irParaConteudosAvaliados}
+        >
+          <Feather
+            name="check"
+            size={29}
+            color={COLORS.primary}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={irParaPerfil}
+        >
+          <Ionicons
+            name="person-outline"
+            size={29}
+            color={COLORS.primary}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -65,26 +145,33 @@ export default function TelaPrincipal({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  centralArea: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  areaSuperior: {
     width: '100%',
-    paddingBottom: 40,
+    alignItems: 'center',
+    paddingTop: 0,
   },
 
   imagem_inicial: {
-    width: 300,
-    height: 200,
-    resizeMode: 'contain',
-    marginTop: 8,
+    width: 250,
+    height: 105,
+    marginTop: 0,
+  },
+
+  centralArea: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 5,
+    paddingBottom: 75,
   },
 
   title: {
     color: COLORS.text,
     fontSize: 28,
     alignSelf: 'center',
-    marginTop: 12,
+    marginTop: 0,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -98,22 +185,27 @@ const styles = StyleSheet.create({
   },
 
   image: {
-    width: 250,
+    width: 230,
     height: 220,
-    resizeMode: 'contain',
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: 5,
+    marginBottom: 5,
+  },
+
+  botaoSortear: {
+    width: '85%',
+    minHeight: 48,
+    paddingHorizontal: 18,
+    marginTop: 3,
   },
 
   botao_filtros: {
     backgroundColor: COLORS.white,
-    width: 230,
-    height: 44,
+    width: '85%',
+    height: 46,
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 18,
+    marginTop: 14,
   },
 
   botaoTexto_filtros: {
@@ -126,9 +218,8 @@ const styles = StyleSheet.create({
   imagem_filtros: {
     width: 20,
     height: 20,
-    resizeMode: 'contain',
     position: 'absolute',
-    left: 12,
+    left: 15,
     transform: [{ rotate: '90deg' }],
   },
 
@@ -136,7 +227,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#0a0a0c',
+    backgroundColor: '#1e1e1e',
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     height: 60,
@@ -148,15 +239,5 @@ const styles = StyleSheet.create({
 
   itemNav: {
     padding: 10,
-  },
-
-  botaoSortear: {
-    width: 150,
-    minHeight: 44,
-    paddingHorizontal: 18,
-    marginTop: 4,
-  },
-  areaSuperior: {
-    alignItems: 'center',
   },
 });

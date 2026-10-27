@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { COLORS, commonStyles } from './theme';
 
 import AlterarSenha from './alterar_senha';
 import Bloqueados from './bloqueados';
@@ -18,16 +19,28 @@ import AlterarAvatar from './alterar_avatar';
 import AlterarTema from './Alterar_tema';
 
 const favoritosIniciais = [
-  { id: '1', imagem: 'https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg' },
-  { id: '2', imagem: 'https://image.tmdb.org/t/p/w200/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg' },
-  { id: '3', imagem: 'https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg' },
-  { id: '4', imagem: 'https://image.tmdb.org/t/p/w200/7fn624j5lj3xTme2SgiLCeuedmO.jpg' },
+  {
+    id: '1',
+    imagem: 'https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
+  },
+  {
+    id: '2',
+    imagem: 'https://image.tmdb.org/t/p/w200/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg',
+  },
+  {
+    id: '3',
+    imagem: 'https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',
+  },
+  {
+    id: '4',
+    imagem: 'https://image.tmdb.org/t/p/w200/7fn624j5lj3xTme2SgiLCeuedmO.jpg',
+  },
 ];
 
 export default function PerfilScreen({ navigation, route }) {
   const { apelido, senha } = route.params || {};
-  const [telaAtual, setTelaAtual] = useState('Perfil');
 
+  const [telaAtual, setTelaAtual] = useState('Perfil');
   const [filmesFavoritos, setFilmesFavoritos] = useState(favoritosIniciais);
 
   const [fotoPerfil, setFotoPerfil] = useState(
@@ -42,11 +55,7 @@ export default function PerfilScreen({ navigation, route }) {
 
   // CONEXÃO COM AS OUTRAS TELAS
   if (telaAtual === 'AlterarSenha') {
-    return (
-      <AlterarSenha
-        voltar={() => setTelaAtual('Perfil')}
-      />
-    );
+    return <AlterarSenha voltar={() => setTelaAtual('Perfil')} />;
   }
 
   if (telaAtual === 'Bloqueados') {
@@ -79,31 +88,19 @@ export default function PerfilScreen({ navigation, route }) {
     );
   }
 
-  // TELA DE PERFIL
   return (
-    <View style={estilos.conteiner}>
+    <View style={commonStyles.container}>
       <StatusBar
         barStyle="light-content"
         backgroundColor="#000000"
       />
 
-      {/* CABEÇALHO */}
-      <View style={estilos.cabecalho}>
-        <TouchableOpacity
-          style={estilos.botaoVoltar}
-          activeOpacity={0.7}
-          onPress={() => navigation.navigate('Principal', { apelido, senha })}
-        >
-          <Ionicons
-            name="chevron-back"
-            size={22}
-            color="#a855f7"
-          />
-        </TouchableOpacity>
-
+      {/* LOGO PADRONIZADA */}
+      <View style={estilos.areaSuperior}>
         <Image
           source={require('./assets/PopMovielogo.png')}
-          style={estilos.imagem}
+          style={estilos.imagem_inicial}
+          resizeMode="contain"
         />
       </View>
 
@@ -111,7 +108,7 @@ export default function PerfilScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={estilos.conteudoRolagem}
       >
-        {/* PERFIL DO PEDRO */}
+        {/* PERFIL */}
         <View style={estilos.secaoPerfil}>
           <Image
             source={fotoPerfil}
@@ -120,10 +117,9 @@ export default function PerfilScreen({ navigation, route }) {
 
           <View style={estilos.infoPerfil}>
             <Text style={estilos.saudacao}>
-              Olá, {apelido || 'Pedro'}!
+              Olá, {apelido || 'Fulano'}!
             </Text>
 
-            {/* LÁPIS PARA ALTERAR AVATAR */}
             <TouchableOpacity
               onPress={() => setTelaAtual('AlterarAvatar')}
               activeOpacity={0.7}
@@ -132,7 +128,7 @@ export default function PerfilScreen({ navigation, route }) {
               <Feather
                 name="edit-2"
                 size={18}
-                color="#a855f7"
+                color={COLORS.primary}
               />
             </TouchableOpacity>
           </View>
@@ -140,42 +136,34 @@ export default function PerfilScreen({ navigation, route }) {
 
         {/* OPÇÕES DE CONFIGURAÇÃO */}
         <View style={estilos.listaOpcoes}>
-
-          {/* ALTERAR SENHA */}
           <TouchableOpacity
             style={estilos.itemOpcao}
             activeOpacity={0.7}
             onPress={() => setTelaAtual('AlterarSenha')}
           >
-            <Text style={estilos.textoOpcao}>
-              Alterar senha
-            </Text>
+            <Text style={estilos.textoOpcao}>Alterar senha</Text>
 
             <Feather
               name="edit-2"
               size={16}
-              color="#a855f7"
+              color={COLORS.primary}
             />
           </TouchableOpacity>
 
-          {/* ALTERAR TEMA */}
           <TouchableOpacity
             style={estilos.itemOpcao}
             activeOpacity={0.7}
             onPress={() => setTelaAtual('AlterarTema')}
           >
-            <Text style={estilos.textoOpcao}>
-              Alterar tema
-            </Text>
+            <Text style={estilos.textoOpcao}>Alterar tema</Text>
 
             <Feather
               name="edit-2"
               size={16}
-              color="#a855f7"
+              color={COLORS.primary}
             />
           </TouchableOpacity>
 
-          {/* CONTEÚDOS BLOQUEADOS */}
           <TouchableOpacity
             style={estilos.itemOpcao}
             activeOpacity={0.7}
@@ -188,16 +176,13 @@ export default function PerfilScreen({ navigation, route }) {
             <Feather
               name="edit-2"
               size={16}
-              color="#a855f7"
+              color={COLORS.primary}
             />
           </TouchableOpacity>
-
         </View>
 
-        {/* FAVORITOS */}
-        <Text style={estilos.tituloSecao}>
-          Favoritos
-        </Text>
+        {/* FILMES FAVORITOS */}
+        <Text style={estilos.tituloSecao}>Favoritos</Text>
 
         <FlatList
           data={filmesFavoritos}
@@ -234,53 +219,75 @@ export default function PerfilScreen({ navigation, route }) {
         />
       </ScrollView>
 
-      {/* BARRA INFERIOR */}
+      {/* BARRA DE NAVEGAÇÃO INFERIOR */}
       <View style={estilos.barraNavegacao}>
         <TouchableOpacity
           style={estilos.itemNav}
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('Principal', { apelido, senha })}
+          onPress={() =>
+            navigation.navigate('Principal', { apelido, senha })
+          }
         >
           <Ionicons
             name="home-outline"
-            size={24}
-            color="#a855f7"
+            size={29}
+            color={COLORS.primary}
           />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={estilos.itemNav}
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('MinhaLista', { apelido, senha })}
+          onPress={() =>
+            navigation.navigate('Buscar', { apelido, senha })
+          }
+        >
+          <Ionicons
+            name="search-outline"
+            size={29}
+            color={COLORS.primary}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={estilos.itemNav}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate('MinhaLista', { apelido, senha })
+          }
         >
           <Ionicons
             name="list-outline"
-            size={24}
-            color="#a855f7"
+            size={29}
+            color={COLORS.primary}
           />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={estilos.itemNav}
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('ConteudosAvaliados', { apelido, senha })}
+          onPress={() =>
+            navigation.navigate('ConteudosAvaliados', { apelido, senha })
+          }
         >
           <Feather
             name="check"
-            size={24}
-            color="#a855f7"
+            size={29}
+            color={COLORS.primary}
           />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={estilos.itemNav}
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('Perfil', { apelido, senha })}
+          onPress={() =>
+            navigation.navigate('Perfil', { apelido, senha })
+          }
         >
           <Ionicons
             name="person-outline"
-            size={24}
-            color="#a855f7"
+            size={29}
+            color={COLORS.primary}
           />
         </TouchableOpacity>
       </View>
@@ -289,39 +296,27 @@ export default function PerfilScreen({ navigation, route }) {
 }
 
 const estilos = StyleSheet.create({
-  conteiner: {
-    flex: 1,
-    backgroundColor: '#000000',
-    paddingTop: 10,
+  areaSuperior: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 0,
   },
 
-  cabecalho: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-
-  botaoVoltar: {
-    width: 38,
-    height: 38,
-    backgroundColor: '#121215',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#222226',
-    marginRight: 16,
+  imagem_inicial: {
+    width: 250,
+    height: 105,
+    marginTop: 0,
   },
 
   conteudoRolagem: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingHorizontal: 15,
+    paddingBottom: 85,
   },
 
   secaoPerfil: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 5,
     marginBottom: 24,
   },
 
@@ -330,7 +325,7 @@ const estilos = StyleSheet.create({
     height: 65,
     borderRadius: 35,
     borderWidth: 2,
-    borderColor: '#a855f7',
+    borderColor: COLORS.primary,
     marginRight: 16,
   },
 
@@ -340,7 +335,7 @@ const estilos = StyleSheet.create({
   },
 
   saudacao: {
-    color: '#a855f7',
+    color: COLORS.primary,
     fontSize: 20,
     fontWeight: 'bold',
     marginRight: 8,
@@ -363,41 +358,47 @@ const estilos = StyleSheet.create({
   },
 
   textoOpcao: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '500',
   },
 
   tituloSecao: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 16,
   },
 
   listaFilmes: {
-    paddingBottom: 10,
+    paddingHorizontal: 15,
+    paddingBottom: 85,
+    paddingTop: 6,
   },
 
   columnWrapper: {
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 18,
   },
 
   cartaoFilme: {
-    width: '31%',
-    marginBottom: 8,
+    width: 96,
+    marginBottom: 5,
   },
 
   posterFilme: {
     width: '100%',
-    height: 140,
+    height: 146,
     borderRadius: 10,
     marginBottom: 8,
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    paddingHorizontal: 17,
+    gap: 10,
   },
 
   botaoFavorito: {
-    backgroundColor: '#a855f7',
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     height: 28,
     justifyContent: 'center',
@@ -405,7 +406,7 @@ const estilos = StyleSheet.create({
   },
 
   mensagemVazia: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 15,
     textAlign: 'center',
     marginTop: 20,
@@ -415,20 +416,17 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#0a0a0c',
+    backgroundColor: '#1e1e1e',
     borderTopWidth: 1,
-    borderTopColor: '#1f1f23',
+    borderTopColor: COLORS.border,
     height: 60,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
 
   itemNav: {
     padding: 10,
-  },
-
-  imagem: {
-    width: 180,
-    height: 100,
-    resizeMode: 'contain',
-    marginTop: -10,
   },
 });
