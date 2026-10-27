@@ -5,28 +5,38 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
+
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { COLORS, commonStyles, useTheme } from './theme';
 
 export default function TelaPrincipal({ navigation, route }) {
-  const { background, primary, text, textSoft, surfaceElevated, border } = useTheme();
-  const { apelido, senha } = route.params || {};
+  const {
+    background,
+    primary,
+    text,
+    textSoft,
+    surfaceElevated,
+    border,
+  } = useTheme();
+
+  const { apelido, email, senha } = route.params || {};
 
   const irParaMinhaLista = () =>
-    navigation.navigate('MinhaLista', { apelido, senha });
+    navigation.navigate('MinhaLista', { apelido, email, senha });
 
   const irParaConteudosAvaliados = () =>
-    navigation.navigate('ConteudosAvaliados', { apelido, senha });
+    navigation.navigate('ConteudosAvaliados', { apelido, email, senha });
 
   const irParaPerfil = () =>
-    navigation.navigate('Perfil', { apelido, senha });
+    navigation.navigate('Perfil', { apelido, email, senha });
 
   const irParaFiltros = () =>
-    navigation.navigate('Filtros', { apelido, senha });
+    navigation.navigate('Filtros', { apelido, email, senha });
 
   const irParaSorteio = () =>
     navigation.navigate('ConteudoSorteado', {
       apelido,
+      email,
       senha,
       sorteioId: Date.now(),
     });
@@ -93,35 +103,30 @@ export default function TelaPrincipal({ navigation, route }) {
       <View
         style={[
           styles.barraNavegacao,
-          { backgroundColor: surfaceElevated, borderTopColor: border },
+          {
+            backgroundColor: surfaceElevated,
+            borderTopColor: border,
+          },
         ]}
       >
         <TouchableOpacity
           style={styles.itemNav}
           activeOpacity={0.7}
           onPress={() =>
-            navigation.navigate('Principal', { apelido, senha })
+            navigation.navigate('Principal', { apelido, email, senha })
           }
         >
-          <Ionicons
-            name="home-outline"
-            size={29}
-            color={primary}
-          />
+          <Ionicons name="home-outline" size={29} color={primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.itemNav}
           activeOpacity={0.7}
           onPress={() =>
-            navigation.navigate('Buscar', { apelido, senha })
+            navigation.navigate('Buscar', { apelido, email, senha })
           }
         >
-          <Ionicons
-            name="search-outline"
-            size={29}
-            color={primary}
-          />
+          <Ionicons name="search-outline" size={29} color={primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -129,11 +134,7 @@ export default function TelaPrincipal({ navigation, route }) {
           activeOpacity={0.7}
           onPress={irParaMinhaLista}
         >
-          <Ionicons
-            name="list-outline"
-            size={29}
-            color={primary}
-          />
+          <Ionicons name="list-outline" size={29} color={primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -141,11 +142,7 @@ export default function TelaPrincipal({ navigation, route }) {
           activeOpacity={0.7}
           onPress={irParaConteudosAvaliados}
         >
-          <Feather
-            name="check"
-            size={29}
-            color={primary}
-          />
+          <Feather name="check" size={29} color={primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -153,14 +150,9 @@ export default function TelaPrincipal({ navigation, route }) {
           activeOpacity={0.7}
           onPress={irParaPerfil}
         >
-          <Ionicons
-            name="person-outline"
-            size={29}
-            color={primary}
-          />
+          <Ionicons name="person-outline" size={29} color={primary} />
         </TouchableOpacity>
       </View>
-
     </View>
   );
 }
