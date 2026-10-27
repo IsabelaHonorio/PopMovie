@@ -1,5 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Image, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, View, Image, Pressable, SafeAreaView, StatusBar } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Certifique-se de ter essa biblioteca instalada
 
 export default function AlterarTemaScreen({ navigation, route, voltar }) {
   const { apelido, senha } = route?.params || {};
@@ -25,7 +26,7 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="black" />
 
-      {/* Botão Voltar Quadrado */}
+      {/* Botão Voltar Profissional */}
       <Pressable
         style={({ pressed }) => [
           styles.botaoVoltar,
@@ -82,12 +83,12 @@ const styles = StyleSheet.create({
     left: 20,
     width: 42,
     height: 42,
-    borderRadius: 12, // Cantos arredondados estilo quadrado moderno (mude para 0 se quiser quadrado perfeito)
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Fundo translúcido elegante
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.15)', // Borda sutil
     zIndex: 99,
   },
 
