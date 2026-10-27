@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 
 export default function AlterarTemaScreen({ navigation, route, voltar }) {
   const { apelido, senha } = route?.params || {};
@@ -10,24 +10,31 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
       return;
     }
 
-    if (navigation && navigation.canGoBack && navigation.canGoBack()) {
+    if (navigation && typeof navigation.goBack === 'function' && navigation.canGoBack?.()) {
       navigation.goBack();
       return;
     }
 
-    if (navigation) {
+    if (navigation && typeof navigation.navigate === 'function') {
       navigation.navigate('Perfil', { apelido, senha });
+      return;
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="black" />
 
+      {/* Botão Voltar Quadrado */}
       <Pressable
-        style={styles.botaoVoltar}
+        style={({ pressed }) => [
+          styles.botaoVoltar,
+          pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] }
+        ]}
         onPress={voltarParaPerfil}
+        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
       >
-        <Text style={styles.voltarTexto}>{'<'}</Text>
+        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
       </Pressable>
 
       <View style={styles.conteudo}>
@@ -55,7 +62,7 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
           <Text style={styles.textoBotao}>Aplicar filtros</Text>
         </Pressable>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -66,34 +73,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     padding: 20,
+    paddingTop: 50,
   },
 
   botaoVoltar: {
     position: 'absolute',
-    top: 30,
+    top: 45,
     left: 20,
-    width: 36,
-    height: 36,
+    width: 42,
+    height: 42,
+    borderRadius: 12, // Cantos arredondados estilo quadrado moderno (mude para 0 se quiser quadrado perfeito)
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  voltarTexto: {
-    color: '#983BFF',
-    fontSize: 42,
-    lineHeight: 42,
-    marginTop: -6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    zIndex: 99,
   },
 
   conteudo: {
     alignItems: 'center',
     width: '100%',
+    marginTop: 20,
   },
 
   image: {
     width: 200,
     height: 100,
-    marginTop: 20,
+    marginTop: 10,
   },
 
   title: {
@@ -107,13 +114,13 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     backgroundColor: '#983BFF',
-    borderRadius: 100,
+    borderRadius: 30,
     marginTop: 30,
   },
 
   corAtual: {
     color: 'white',
-    marginTop: 2,
+    marginTop: 5,
   },
 
   novoTema: {
