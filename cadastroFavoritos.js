@@ -13,18 +13,28 @@ import {
 import { getFavorites, setFavoriteAt } from './favoritesStore';
 import { useTheme } from './theme';
 
-export default function App({ navigation, route }) {
+export default function CadastroFavoritos({ navigation, route }) {
   const { background, primary, primaryDark, text } = useTheme();
+
   const [favorites, setFavorites] = useState(getFavorites());
+  const [erro, setErro] = useState('');
 
   useEffect(() => {
-    if (route?.params?.selectedMovie && route.params.slotIndex !== undefined) {
+    if (
+      route?.params?.selectedMovie &&
+      route.params.slotIndex !== undefined
+    ) {
       const { selectedMovie, slotIndex } = route.params;
 
       const nextFavorites = setFavoriteAt(slotIndex, selectedMovie);
-      setFavorites(nextFavorites);
 
-      navigation.setParams({ selectedMovie: undefined, slotIndex: undefined });
+      setFavorites(nextFavorites);
+      setErro('');
+
+      navigation.setParams({
+        selectedMovie: undefined,
+        slotIndex: undefined,
+      });
     }
   }, [route?.params?.selectedMovie, route?.params?.slotIndex]);
 
@@ -33,18 +43,34 @@ export default function App({ navigation, route }) {
   };
 
   const handleAddFavorite = (index) => {
-    navigation.navigate('BuscaSemBarra', { slotIndex: index });
+    navigation.navigate('BuscaSemBarra', {
+      slotIndex: index,
+    });
   };
 
   const handleRegister = () => {
+    const quantidadeFavoritos = favorites.filter(
+      (favorite) => favorite !== null && favorite !== undefined
+    ).length;
+
+    if (quantidadeFavoritos < 3) {
+      setErro('Você precisa escolher pelo menos 3 filmes para continuar.');
+      return;
+    }
+
+    setErro('');
+
     navigation.navigate('Principal', {
-      apelido: 'Pedro',
-      senha: '123456',
+      apelido: route?.params?.apelido,
+      email: route?.params?.email,
+      senha: route?.params?.senha,
     });
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: background }]}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: background }]}
+    >
       <StatusBar
         barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
         backgroundColor={background}
@@ -54,14 +80,18 @@ export default function App({ navigation, route }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.container, { backgroundColor: background }]}>
+        <View
+          style={[styles.container, { backgroundColor: background }]}
+        >
           {/* Botão voltar */}
           <TouchableOpacity
             style={styles.backButton}
             onPress={handleBack}
             activeOpacity={0.7}
           >
-            <Text style={[styles.backArrow, { color: primary }]}>‹</Text>
+            <Text style={[styles.backArrow, { color: primary }]}>
+              ‹
+            </Text>
           </TouchableOpacity>
 
           {/* Logo PopMovie */}
@@ -72,6 +102,18 @@ export default function App({ navigation, route }) {
               resizeMode="contain"
             />
           </View>
+
+          {/* Instrução */}
+          <Text style={[styles.instrucao, { color: text }]}>
+            Escolha pelo menos 3 filmes para continuar!
+          </Text>
+
+          {/* Mensagem de erro */}
+          {erro !== '' && (
+            <Text style={styles.mensagemErro}>
+              {erro}
+            </Text>
+          )}
 
           {/* Conteúdos favoritos */}
           <View style={styles.favoritesSection}>
@@ -115,7 +157,10 @@ export default function App({ navigation, route }) {
             <TouchableOpacity
               style={[
                 styles.registerButton,
-                { backgroundColor: primary, shadowColor: primaryDark },
+                {
+                  backgroundColor: primary,
+                  shadowColor: primaryDark,
+                },
               ]}
               onPress={handleRegister}
               activeOpacity={0.8}
@@ -163,7 +208,6 @@ const styles = StyleSheet.create({
   },
 
   backArrow: {
-    color: "#9638FF",
     fontSize: 46,
     lineHeight: 46,
     fontWeight: "300",
@@ -178,6 +222,26 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
 
+  logo: {
+    width: 260,
+    height: 91,
+    resizeMode: "contain",
+  },
+
+  instrucao: {
+    fontSize: 15,
+    textAlign: "center",
+    marginTop: 8,
+    marginBottom: 12,
+  },
+
+  mensagemErro: {
+    color: "#FF5252",
+    fontSize: 13,
+    textAlign: "center",
+    marginBottom: 12,
+  },
+
   favoritesSection: {
     width: "100%",
     alignItems: "center",
@@ -186,7 +250,6 @@ const styles = StyleSheet.create({
 
   heading: {
     width: "100%",
-    color: "#FFFFFF",
     fontSize: 32,
     fontWeight: "400",
     textAlign: "center",
@@ -206,14 +269,11 @@ const styles = StyleSheet.create({
   favoriteSlot: {
     width: 120,
     height: 120,
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
     borderWidth: 1,
-
-    shadowColor: "#9B7BFF",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -256,8 +316,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 37,
-
-    shadowColor: "#9638FF",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
