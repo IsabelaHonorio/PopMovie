@@ -65,8 +65,12 @@ export default function CadastroScreen({ navigation }) {
 
     // Se tudo estiver correto, vai para os favoritos
     if (formularioValido) {
+      const nomeUsuario = apelido.trim();
+      global.currentUserName = nomeUsuario;
+
       navigation.navigate('CadastroFavoritos', {
-        apelido: apelido.trim(),
+        apelido: nomeUsuario,
+        nomeUsuario,
         email: email.trim(),
         senha,
       });

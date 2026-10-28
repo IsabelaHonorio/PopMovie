@@ -19,23 +19,38 @@ export default function TelaPrincipal({ navigation, route }) {
     border,
   } = useTheme();
 
-  const { apelido, email, senha } = route.params || {};
+  const { apelido, email, senha, nomeUsuario } = route.params || {};
+
+  const nomeExibido =
+    apelido || nomeUsuario || global.currentUserName || 'Fulano';
 
   const irParaMinhaLista = () =>
-    navigation.navigate('MinhaLista', { apelido, email, senha });
+    navigation.navigate('MinhaLista', {
+      apelido: nomeExibido,
+      email,
+      senha,
+    });
 
   const irParaConteudosAvaliados = () =>
-    navigation.navigate('ConteudosAvaliados', { apelido, email, senha });
+    navigation.navigate('ConteudosAvaliados', {
+      apelido: nomeExibido,
+      email,
+      senha,
+    });
 
   const irParaPerfil = () =>
-    navigation.navigate('Perfil', { apelido, email, senha });
+    navigation.navigate('Perfil', {
+      apelido: nomeExibido,
+      email,
+      senha,
+    });
 
   const irParaFiltros = () =>
-    navigation.navigate('Filtros', { apelido, email, senha });
+    navigation.navigate('Filtros', { apelido: nomeExibido, email, senha });
 
   const irParaSorteio = () =>
     navigation.navigate('ConteudoSorteado', {
-      apelido,
+      apelido: nomeExibido,
       email,
       senha,
       sorteioId: Date.now(),
@@ -55,7 +70,7 @@ export default function TelaPrincipal({ navigation, route }) {
       {/* Conteúdo principal */}
       <View style={styles.centralArea}>
         <Text style={[styles.title, { color: text }]}>
-          Olá, {apelido || 'Fulano'}!
+          Olá, {nomeExibido}!
         </Text>
 
         <Text style={[styles.text, { color: textSoft }]}>

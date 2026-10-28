@@ -34,6 +34,7 @@ export default function PerfilScreen({ navigation, route }) {
     textSoft,
   } = useTheme();
   const { apelido, senha } = route.params || {};
+  const nomeExibido = apelido || global.currentUserName || 'Fulano';
 
   const [telaAtual, setTelaAtual] = useState('Perfil');
   const [filmesFavoritos, setFilmesFavoritos] = useState(getFavoriteMovies());
@@ -108,7 +109,7 @@ export default function PerfilScreen({ navigation, route }) {
 
           <View style={estilos.infoPerfil}>
             <Text style={[estilos.saudacao, { color: primary }]}>
-              Olá, {apelido || 'Fulano'}!
+              Olá, {nomeExibido}!
             </Text>
 
             <TouchableOpacity
@@ -195,45 +196,50 @@ export default function PerfilScreen({ navigation, route }) {
               Você ainda não tem filmes favoritos.
             </Text>
           }
-          renderItem={({ item }) => (
-            <View style={estilos.cartaoFilme}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() =>
-                  navigation.navigate('DetalhesFilme', {
-                    filme: item,
-                    idFilme: item.id,
-                    apelido,
-                    senha,
-                  })
-                }
-                accessibilityLabel={`Abrir detalhes de ${item.title || item.original_title || item.nome || 'filme'}`}
-              >
-                <Image
-                  source={{
-                    uri: item.poster_path
-                      ? `https://image.tmdb.org/t/p/w200${item.poster_path}`
-                      : item.imagem,
-                  }}
-                  style={estilos.posterFilme}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
+          renderItem={({ item }) => {
+            const posterUrl = item.poster_path || item.poster || item.imagem;
+            const posterUri = posterUrl?.startsWith('http')
+              ? posterUrl
+              : posterUrl
+                ? `https://image.tmdb.org/t/p/w200${posterUrl}`
+                : null;
 
-              <TouchableOpacity
-                style={[estilos.botaoFavorito, { backgroundColor: primary }]}
-                onPress={() => toggleFavoriteMovie(item)}
-                activeOpacity={0.7}
-                accessibilityLabel={`Remover ${item.title || item.original_title || item.nome || 'filme'} dos favoritos`}
-              >
-                <Ionicons
-                  name="heart"
-                  size={18}
-                  color="#000000"
-                />
-              </TouchableOpacity>
-            </View>
-          )}
+            return (
+              <View style={estilos.cartaoFilme}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    navigation.navigate('DetalhesFilme', {
+                      filme: item,
+                      idFilme: item.id,
+                      apelido,
+                      senha,
+                    })
+                  }
+                  accessibilityLabel={`Abrir detalhes de ${item.title || item.original_title || item.nome || 'filme'}`}
+                >
+                  <Image
+                    source={{ uri: posterUri }}
+                    style={estilos.posterFilme}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[estilos.botaoFavorito, { backgroundColor: primary }]}
+                  onPress={() => toggleFavoriteMovie(item)}
+                  activeOpacity={0.7}
+                  accessibilityLabel={`Remover ${item.title || item.original_title || item.nome || 'filme'} dos favoritos`}
+                >
+                  <Ionicons
+                    name="heart"
+                    size={18}
+                    color="#000000"
+                  />
+                </TouchableOpacity>
+              </View>
+            );
+          }}
         />
       </ScrollView>
 

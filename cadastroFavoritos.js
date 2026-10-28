@@ -11,6 +11,10 @@ import {
 } from "react-native";
 
 import { getFavorites, setFavoriteAt } from './favoritesStore';
+import {
+  isMovieFavorite,
+  toggleFavoriteMovie as toggleGlobalFavoriteMovie,
+} from './favoriteMoviesStore';
 import { useTheme } from './theme';
 
 export default function CadastroFavoritos({ navigation, route }) {
@@ -25,18 +29,31 @@ export default function CadastroFavoritos({ navigation, route }) {
       route.params.slotIndex !== undefined
     ) {
       const { selectedMovie, slotIndex } = route.params;
+      const previousFavorite = favorites[slotIndex];
+      const selectedId = String(selectedMovie.id);
+      const previousId = previousFavorite ? String(previousFavorite.id) : null;
+
+      if (previousId && previousId !== selectedId) {
+        toggleGlobalFavoriteMovie(previousFavorite);
+      }
+
+      if (!isMovieFavorite(selectedId)) {
+        toggleGlobalFavoriteMovie(selectedMovie);
+      }
 
       const nextFavorites = setFavoriteAt(slotIndex, selectedMovie);
 
       setFavorites(nextFavorites);
       setErro('');
 
-      navigation.setParams({
+      navigation.setParams((prevParams) => ({
+        ...prevParams,
         selectedMovie: undefined,
         slotIndex: undefined,
-      });
+        currentFavorite: undefined,
+      }));
     }
-  }, [route?.params?.selectedMovie, route?.params?.slotIndex]);
+  }, [route?.params?.selectedMovie, route?.params.slotIndex]);
 
   const handleBack = () => {
     navigation.navigate('Cadastro');
@@ -45,6 +62,11 @@ export default function CadastroFavoritos({ navigation, route }) {
   const handleAddFavorite = (index) => {
     navigation.navigate('BuscaSemBarra', {
       slotIndex: index,
+      currentFavorite: favorites[index] || null,
+      apelido: route?.params?.apelido || route?.params?.nomeUsuario,
+      nomeUsuario: route?.params?.nomeUsuario || route?.params?.apelido,
+      email: route?.params?.email,
+      senha: route?.params?.senha,
     });
   };
 
@@ -60,8 +82,12 @@ export default function CadastroFavoritos({ navigation, route }) {
 
     setErro('');
 
+    const nomeUsuario = route?.params?.apelido || route?.params?.nomeUsuario || 'Fulano';
+    global.currentUserName = nomeUsuario;
+
     navigation.navigate('Principal', {
-      apelido: route?.params?.apelido,
+      apelido: nomeUsuario,
+      nomeUsuario,
       email: route?.params?.email,
       senha: route?.params?.senha,
     });

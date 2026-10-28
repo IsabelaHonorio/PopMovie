@@ -108,8 +108,22 @@ export default function BuscaComBarra({ navigation, route }) {
   }, [busca, tentativa]);
 
   const abrirDetalhes = (filme) => {
+    const filmeFavorito = {
+      id: filme.id,
+      title: filme.title || filme.original_title,
+      poster: filme.poster_path
+        ? `${IMAGE_BASE_URL}${filme.poster_path}`
+        : null,
+      year: filme.release_date ? filme.release_date.slice(0, 4) : 'Ano não informado',
+      rating: filme.vote_average ? filme.vote_average.toFixed(1) : 'Sem nota',
+    };
+
+    if (!filmesFavoritos.some((item) => String(item.id) === String(filme.id))) {
+      toggleFavoriteMovie(filmeFavorito);
+    }
+
     navigation.navigate('DetalhesFilme', {
-      filme,
+      filme: filmeFavorito,
       idFilme: filme.id,
       apelido,
       senha,
@@ -222,9 +236,6 @@ export default function BuscaComBarra({ navigation, route }) {
             </View>
           ) : (
             filmes.map((filme) => {
-              const favorito = filmesFavoritos.some(
-                (item) => String(item.id) === String(filme.id)
-              );
               const poster = filme.poster_path
                 ? `${IMAGE_BASE_URL}${filme.poster_path}`
                 : null;
@@ -269,25 +280,6 @@ export default function BuscaComBarra({ navigation, route }) {
                       </Text>
                     </View>
                   </View>
-
-                  <Pressable
-                    style={styles.favoriteButton}
-                    onPress={(event) => {
-                      event.stopPropagation();
-                      toggleFavoriteMovie(filme);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'
-                    }
-                    hitSlop={8}
-                  >
-                    <Ionicons
-                      name={favorito ? 'heart' : 'heart-outline'}
-                      size={27}
-                      color={primary}
-                    />
-                  </Pressable>
                 </Pressable>
               );
             })
@@ -493,13 +485,6 @@ const styles = StyleSheet.create({
 
   ratingText: {
     fontSize: 14,
-  },
-
-  favoriteButton: {
-    width: 36,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   barraNavegacao: {
