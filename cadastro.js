@@ -12,6 +12,8 @@ import {
 
 import { commonStyles, useTheme } from './theme';
 
+import { supabase } from './lib/supabase';
+
 export default function CadastroScreen({ navigation }) {
   const { background, primary, text } = useTheme();
 
@@ -25,7 +27,7 @@ export default function CadastroScreen({ navigation }) {
   const [erroSenha, setErroSenha] = useState('');
   const [erroConfirmarSenha, setErroConfirmarSenha] = useState('');
 
-  const cadastrar = () => {
+  const cadastrar = async () => {
     setErroApelido('');
     setErroEmail('');
     setErroSenha('');
@@ -63,18 +65,38 @@ export default function CadastroScreen({ navigation }) {
       formularioValido = false;
     }
 
-    // Se tudo estiver correto, vai para os favoritos
-    if (formularioValido) {
-      const nomeUsuario = apelido.trim();
-      global.currentUserName = nomeUsuario;
-
-      navigation.navigate('CadastroFavoritos', {
-        apelido: nomeUsuario,
-        nomeUsuario,
-        email: email.trim(),
-        senha,
-      });
+    // Interromper se houver algum erro
+    if (!formularioValido) {
+      return;
     }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: senha,
+      options: {
+        data: {
+          apelido: apelido.trim(),
+        },
+      },
+    });
+
+    if (error) {
+      console.log('Erro ao cadastrar usuário:', error);
+
+      if (error.message.includes('usuario_apelido_unique')) {
+        setErroApelido('Esse apelido já está sendo utilizado.');
+      } else {
+        setErroEmail(error.message);
+      }
+
+      return;
+    }
+
+    navigation.navigate('CadastroFavoritos', {
+      apelido: apelido.trim(),
+      nomeUsuario: apelido.trim(),
+      email: email.trim(),
+    });
   };
 
   return (
