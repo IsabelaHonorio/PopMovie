@@ -12,7 +12,8 @@ import {
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, commonStyles, useTheme } from './theme';
-import { getWatchlist } from './watchlistStore';
+import { getWatchlist, substituirWatchlist } from './watchlistStore';
+import { buscarFilmesPorFuncionalidade } from './lib/supabase';
 
 export default function MinhaListaScreen({ navigation, route }) {
   const {
@@ -29,7 +30,19 @@ export default function MinhaListaScreen({ navigation, route }) {
 
   useFocusEffect(
     useCallback(() => {
-      setFilmes(getWatchlist());
+      let ativo = true;
+
+      buscarFilmesPorFuncionalidade('lista')
+        .then((filmesBanco) => {
+          if (!ativo) return;
+          substituirWatchlist(filmesBanco);
+          setFilmes(filmesBanco);
+        })
+        .catch((erro) => console.error('Erro ao carregar Minha Lista:', erro));
+
+      return () => {
+        ativo = false;
+      };
     }, [])
   );
 

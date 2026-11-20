@@ -11,7 +11,8 @@ import {
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, commonStyles, useTheme } from './theme';
-import { getEvaluatedMovies } from './evaluatedStore';
+import { getEvaluatedMovies, substituirAvaliacoes } from './evaluatedStore';
+import { buscarFilmesPorFuncionalidade } from './lib/supabase';
 
 export default function ConteudosAvaliadosScreen({ navigation, route }) {
   const {
@@ -27,7 +28,19 @@ export default function ConteudosAvaliadosScreen({ navigation, route }) {
 
   useFocusEffect(
     useCallback(() => {
-      setFilmes(getEvaluatedMovies());
+      let ativo = true;
+
+      buscarFilmesPorFuncionalidade('avaliacao')
+        .then((filmesBanco) => {
+          if (!ativo) return;
+          substituirAvaliacoes(filmesBanco);
+          setFilmes(filmesBanco);
+        })
+        .catch((erro) => console.error('Erro ao carregar avaliações:', erro));
+
+      return () => {
+        ativo = false;
+      };
     }, [])
   );
 

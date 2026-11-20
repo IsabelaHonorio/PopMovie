@@ -9,53 +9,99 @@ import {
 } from 'react-native';
 
 import { commonStyles, useTheme } from './theme';
+import { supabase } from './lib/supabase';
 
 export default function TelaLogin({ navigation }) {
   const { background, primary, text, textSoft } = useTheme();
 
-  const [apelido, setApelido] = useState('');
+  const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
 
-  const [erroApelido, setErroApelido] = useState('');
+  const [erroEmail, setErroEmail] = useState('');
   const [erroSenha, setErroSenha] = useState('');
+  const [erroLogin, setErroLogin] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
-  const entrar = () => {
+  const entrar = async () => {
     let formularioValido = true;
 
-    setErroApelido('');
+    setErroEmail('');
     setErroSenha('');
+    setErroLogin('');
 
-    // Verifica se o apelido foi preenchido
-    if (apelido.trim().length < 1) {
-      setErroApelido('Digite pelo menos um caractere no apelido.');
+    // Validação do e-mail
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setErroEmail('Digite um e-mail válido.');
       formularioValido = false;
     }
 
     // Verifica o tamanho da senha
     if (senha.length < 6) {
-      setErroSenha(
-        'A senha deve ter pelo menos 6 caracteres e um caractere especial.'
-      );
+      setErroSenha('Digite uma senha com pelo menos 6 caracteres.');
       formularioValido = false;
-    } else {
-      // Verifica se existe pelo menos um caractere especial
-      const possuiEspecial = /[^a-zA-Z0-9]/.test(senha);
+    }
 
-      if (!possuiEspecial) {
-        setErroSenha(
-          'A senha deve ter pelo menos 6 caracteres e um caractere especial.'
-        );
-        formularioValido = false;
+    if (!formularioValido) return;
+
+    setCarregando(true);
+
+    // Tenta fazer login com o Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: senha,
+    });
+
+    if (error) {
+      setCarregando(false);
+
+      if (
+        error.code === 'invalid_credentials' ||
+        error.message?.toLowerCase().includes('invalid login')
+      ) {
+        setErroLogin('E-mail ou senha incorretos.');
+      } else {
+        setErroLogin('Não foi possível entrar. Tente novamente.');
       }
+
+      console.log('Erro ao fazer login:', error);
+      return;
     }
 
-    // Só navega se os dois campos estiverem válidos
-    if (formularioValido) {
-      navigation.navigate('Principal', {
-        apelido,
-        senha,
-      });
+    const usuario = data.user;
+
+    // Obtém o apelido do usuário
+    const apelido =
+      usuario?.user_metadata?.apelido ||
+      usuario?.user_metadata?.nomeUsuario ||
+      email.trim().split('@')[0];
+
+    if (usuario) {
+      // Atualiza ou cria o perfil do usuário na tabela 'usuario'
+      const { error: erroPerfil } = await supabase
+        .from('usuario')
+        .upsert(
+          {
+            id_usuario: usuario.id,
+            apelido,
+          },
+          { onConflict: 'id_usuario' }
+        );
+
+      if (erroPerfil) {
+        console.log('Erro ao carregar/criar perfil:', erroPerfil);
+      }
+
+      global.currentUserName = apelido;
     }
+
+    setCarregando(false);
+
+    // Navega para a tela principal
+    navigation.navigate('Principal', {
+      apelido,
+      email: email.trim(),
+      senha,
+    });
   };
 
   return (
@@ -79,21 +125,21 @@ export default function TelaLogin({ navigation }) {
 
       <View style={styles.form}>
         <Text style={[commonStyles.label, { color: text }]}>
-          APELIDO
+          E-MAIL
         </Text>
 
         <TextInput
           style={commonStyles.input}
-          value={apelido}
+          value={email}
           onChangeText={(valor) => {
-            setApelido(valor);
-            setErroApelido('');
+            setEmail(valor);
+            setErroEmail('');
           }}
           autoCapitalize="none"
         />
 
-        {erroApelido !== '' && (
-          <Text style={styles.mensagemErro}>{erroApelido}</Text>
+        {erroEmail !== '' && (
+          <Text style={styles.mensagemErro}>{erroEmail}</Text>
         )}
 
         <Text style={[commonStyles.label, { color: text }]}>
@@ -113,6 +159,10 @@ export default function TelaLogin({ navigation }) {
         {erroSenha !== '' && (
           <Text style={styles.mensagemErro}>{erroSenha}</Text>
         )}
+
+        {erroLogin !== '' && (
+          <Text style={styles.mensagemErro}>{erroLogin}</Text>
+        )}
       </View>
 
       <Text style={[styles.esqueceuSenha, { color: textSoft }]}>
@@ -125,8 +175,11 @@ export default function TelaLogin({ navigation }) {
           { backgroundColor: primary, shadowColor: primary },
         ]}
         onPress={entrar}
+        disabled={carregando}
       >
-        <Text style={commonStyles.primaryButtonText}>Entrar</Text>
+        <Text style={commonStyles.primaryButtonText}>
+          {carregando ? 'Entrando...' : 'Entrar'}
+        </Text>
       </Pressable>
     </View>
   );

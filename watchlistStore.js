@@ -1,3 +1,5 @@
+import { salvarFuncionalidadesFilme } from './lib/supabase';
+
 const watchlist = [];
 
 export function getWatchlist() {
@@ -15,9 +17,15 @@ export function toggleWatchlist(movie) {
 
   if (index >= 0) {
     watchlist.splice(index, 1);
+    salvarFuncionalidadesFilme(movie.id, { lista: false }).catch(console.error);
     return false;
   }
 
   watchlist.push(movie);
+  salvarFuncionalidadesFilme(movie.id, { lista: true }).catch(console.error);
   return true;
+}
+
+export function substituirWatchlist(movies) {
+  watchlist.splice(0, watchlist.length, ...(movies || []));
 }

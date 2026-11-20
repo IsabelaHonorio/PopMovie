@@ -1,3 +1,5 @@
+import { salvarFuncionalidadesFilme } from './lib/supabase';
+
 const favoriteMovies = [];
 const listeners = new Set();
 
@@ -54,15 +56,22 @@ export function toggleFavoriteMovie(movie) {
   if (index >= 0) {
     favoriteMovies.splice(index, 1);
     notifyListeners();
+    salvarFuncionalidadesFilme(normalizedMovie.id, { favoritos: false }).catch(console.error);
     return false;
   }
 
   favoriteMovies.push(normalizedMovie);
   notifyListeners();
+  salvarFuncionalidadesFilme(normalizedMovie.id, { favoritos: true }).catch(console.error);
   return true;
 }
 
 export function subscribeToFavoriteMovies(listener) {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+export function substituirFavoritos(movies) {
+  favoriteMovies.splice(0, favoriteMovies.length, ...(movies || []));
+  notifyListeners();
 }

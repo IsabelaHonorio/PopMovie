@@ -20,8 +20,10 @@ import AlterarTema from './Alterar_tema';
 import {
   getFavoriteMovies,
   subscribeToFavoriteMovies,
+  substituirFavoritos,
   toggleFavoriteMovie,
 } from './favoriteMoviesStore';
+import { buscarFilmesPorFuncionalidade } from './lib/supabase';
 
 export default function PerfilScreen({ navigation, route }) {
   const {
@@ -40,6 +42,23 @@ export default function PerfilScreen({ navigation, route }) {
   const [filmesFavoritos, setFilmesFavoritos] = useState(getFavoriteMovies());
 
   useEffect(() => subscribeToFavoriteMovies(setFilmesFavoritos), []);
+
+  useEffect(() => {
+    let ativo = true;
+
+    buscarFilmesPorFuncionalidade('favoritos')
+      .then((filmesBanco) => {
+        if (ativo) {
+          substituirFavoritos(filmesBanco);
+          setFilmesFavoritos(filmesBanco);
+        }
+      })
+      .catch((erro) => console.error('Erro ao carregar favoritos:', erro));
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   const [fotoPerfil, setFotoPerfil] = useState(
     require('./assets/avatar/6.png')

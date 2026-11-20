@@ -12,11 +12,12 @@ import {
 
 import { getFavorites, setFavoriteAt } from './favoritesStore';
 import {
+  getFavoriteMovies,
   isMovieFavorite,
   toggleFavoriteMovie as toggleGlobalFavoriteMovie,
 } from './favoriteMoviesStore';
 import { useTheme } from './theme';
-import { supabase } from './lib/supabase';
+import { supabase, salvarFuncionalidadesFilme } from './lib/supabase';
 
 export default function CadastroFavoritos({ navigation, route }) {
   const { background, primary, primaryDark, text } = useTheme();
@@ -127,6 +128,14 @@ export default function CadastroFavoritos({ navigation, route }) {
     }
 
     global.currentUserName = nomeUsuario;
+
+    for (const filmeFavorito of getFavoriteMovies()) {
+      salvarFuncionalidadesFilme(filmeFavorito.id, {
+        favoritos: true,
+      }).catch((erro) => {
+        console.log('Erro ao salvar favorito no banco:', erro);
+      });
+    }
 
     navigation.navigate('Principal', {
       apelido: nomeUsuario,

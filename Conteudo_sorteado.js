@@ -13,10 +13,21 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { COLORS, useTheme } from './theme';
-import { getBlockedMovies } from './blockedStore';
-import { getEvaluatedMovies } from './evaluatedStore';
-import { getFavoriteMovies } from './favoriteMoviesStore';
+import {
+  getBlockedMovies,
+  substituirBloqueados,
+} from './blockedStore';
+import {
+  getEvaluatedMovies,
+  substituirAvaliacoes,
+} from './evaluatedStore';
+import {
+  getFavoriteMovies,
+  substituirFavoritos,
+} from './favoriteMoviesStore';
+import { buscarFilmesPorFuncionalidade } from './lib/supabase';
 import AnimacaoSorteio from './AnimacaoSorteio';
+import { salvarFilmeSorteado } from './lib/supabase';
 
 const API_KEY = '0d335050c2cc3308096c03300829a424';
 
@@ -186,6 +197,21 @@ export default function ConteudoSorteado() {
     try {
       setCarregando(true);
       setErro('');
+
+      const [bloqueadosBanco, avaliadosBanco, favoritosBanco] =
+        await Promise.all([
+          buscarFilmesPorFuncionalidade('bloqueado'),
+          buscarFilmesPorFuncionalidade('avaliacao'),
+          buscarFilmesPorFuncionalidade('favoritos'),
+        ]);
+
+      substituirBloqueados(bloqueadosBanco);
+      substituirAvaliacoes(avaliadosBanco);
+      substituirFavoritos(favoritosBanco);
+
+      if (solicitacao !== solicitacaoRef.current) {
+        return;
+      }
 
       let sorteio = sorteioRef.current;
       if (sorteio.filtrosKey !== filtrosKey) {
@@ -362,6 +388,12 @@ export default function ConteudoSorteado() {
 
       if (solicitacao !== solicitacaoRef.current) {
         return;
+      }
+
+      try {
+        await salvarFilmeSorteado(detalhes.id);
+      } catch (erroBanco) {
+        console.error('Não foi possível salvar o filme no banco:', erroBanco);
       }
 
       setFilme(detalhes);

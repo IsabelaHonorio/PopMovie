@@ -1,3 +1,5 @@
+import { salvarFuncionalidadesFilme } from './lib/supabase';
+
 const evaluations = [];
 
 export function getEvaluatedMovies() {
@@ -20,6 +22,8 @@ export function setMovieRating(movie, rating) {
     if (index >= 0) {
       evaluations.splice(index, 1);
     }
+
+    salvarFuncionalidadesFilme(movie.id, { avaliacao: null }).catch(console.error);
     return;
   }
 
@@ -30,4 +34,10 @@ export function setMovieRating(movie, rating) {
   } else {
     evaluations.push(evaluatedMovie);
   }
+
+  salvarFuncionalidadesFilme(movie.id, { avaliacao: rating }).catch(console.error);
+}
+
+export function substituirAvaliacoes(movies) {
+  evaluations.splice(0, evaluations.length, ...(movies || []));
 }

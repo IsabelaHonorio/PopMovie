@@ -16,8 +16,10 @@ import { COLORS, commonStyles, useTheme } from './theme';
 import {
   getBlockedMovies,
   subscribeToBlockedMovies,
+  substituirBloqueados,
   toggleMovieBlocked,
 } from './blockedStore';
+import { buscarFilmesPorFuncionalidade } from './lib/supabase';
 
 export default function BloqueadosScreen({ navigation, route, voltar }) {
   const {
@@ -44,6 +46,23 @@ export default function BloqueadosScreen({ navigation, route, voltar }) {
   const [filmes, setFilmes] = useState(getBlockedMovies());
 
   useEffect(() => subscribeToBlockedMovies(setFilmes), []);
+
+  useEffect(() => {
+    let ativo = true;
+
+    buscarFilmesPorFuncionalidade('bloqueado')
+      .then((filmesBanco) => {
+        if (ativo) {
+          substituirBloqueados(filmesBanco);
+          setFilmes(filmesBanco);
+        }
+      })
+      .catch((erro) => console.error('Erro ao carregar bloqueados:', erro));
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   const navegar = (tela) =>
     navigation?.navigate(tela, { apelido, senha });

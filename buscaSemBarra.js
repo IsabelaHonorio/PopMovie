@@ -13,10 +13,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from './theme';
-import {
-  getFavoriteMovies,
-  toggleFavoriteMovie,
-} from './favoriteMoviesStore';
 
 const API_KEY = '0d335050c2cc3308096c03300829a424';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w200';
@@ -115,14 +111,6 @@ export default function BuscaSemBarra({ navigation, route }) {
       year: filme.release_date ? filme.release_date.slice(0, 4) : 'Ano não informado',
       rating: filme.vote_average ? filme.vote_average.toFixed(1) : 'Sem nota',
     };
-
-    const jaFavorito = getFavoriteMovies().some(
-      (item) => String(item.id) === String(filme.id)
-    );
-
-    if (!jaFavorito) {
-      toggleFavoriteMovie(filmeFavorito);
-    }
 
     navigation.navigate('CadastroFavoritos', {
       selectedMovie: filmeFavorito,

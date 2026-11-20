@@ -13,11 +13,6 @@ import {
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { COLORS, useTheme } from './theme';
-import {
-  getFavoriteMovies,
-  subscribeToFavoriteMovies,
-  toggleFavoriteMovie,
-} from './favoriteMoviesStore';
 
 const API_KEY = '0d335050c2cc3308096c03300829a424';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w200';
@@ -35,13 +30,10 @@ export default function BuscaComBarra({ navigation, route }) {
   const { apelido, senha } = route.params || {};
   const [busca, setBusca] = useState('');
   const [filmes, setFilmes] = useState([]);
-  const [filmesFavoritos, setFilmesFavoritos] = useState(getFavoriteMovies());
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
   const [tentativa, setTentativa] = useState(0);
   const solicitacaoRef = useRef(0);
-
-  useEffect(() => subscribeToFavoriteMovies(setFilmesFavoritos), []);
 
   useEffect(() => {
     const consulta = busca.trim();
@@ -117,10 +109,6 @@ export default function BuscaComBarra({ navigation, route }) {
       year: filme.release_date ? filme.release_date.slice(0, 4) : 'Ano não informado',
       rating: filme.vote_average ? filme.vote_average.toFixed(1) : 'Sem nota',
     };
-
-    if (!filmesFavoritos.some((item) => String(item.id) === String(filme.id))) {
-      toggleFavoriteMovie(filmeFavorito);
-    }
 
     navigation.navigate('DetalhesFilme', {
       filme: filmeFavorito,
