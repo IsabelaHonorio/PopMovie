@@ -16,12 +16,14 @@ import {
   toggleFavoriteMovie as toggleGlobalFavoriteMovie,
 } from './favoriteMoviesStore';
 import { useTheme } from './theme';
+import { supabase } from './lib/supabase';
 
 export default function CadastroFavoritos({ navigation, route }) {
   const { background, primary, primaryDark, text } = useTheme();
 
   const [favorites, setFavorites] = useState(getFavorites());
   const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
     if (
@@ -56,7 +58,7 @@ export default function CadastroFavoritos({ navigation, route }) {
   }, [route?.params?.selectedMovie, route?.params.slotIndex]);
 
   const handleBack = () => {
-    navigation.navigate('Cadastro');
+    navigation.goBack();
   };
 
   const handleAddFavorite = (index) => {
@@ -70,7 +72,7 @@ export default function CadastroFavoritos({ navigation, route }) {
     });
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const quantidadeFavoritos = favorites.filter(
       (favorite) => favorite !== null && favorite !== undefined
     ).length;
@@ -81,15 +83,56 @@ export default function CadastroFavoritos({ navigation, route }) {
     }
 
     setErro('');
+    setCarregando(true);
 
-    const nomeUsuario = route?.params?.apelido || route?.params?.nomeUsuario || 'Fulano';
+    const nomeUsuario =
+      route?.params?.apelido || route?.params?.nomeUsuario || 'Fulano';
+    const email = route?.params?.email;
+    const senha = route?.params?.senha;
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: senha,
+      options: {
+        data: {
+          apelido: nomeUsuario,
+        },
+      },
+    });
+
+    setCarregando(false);
+
+    if (error) {
+      console.log('Erro ao cadastrar usuário:', error);
+
+      const mensagemErro = error.message.toLowerCase();
+
+      if (
+        error.code === 'user_already_exists' ||
+        mensagemErro.includes('already registered') ||
+        mensagemErro.includes('already been registered')
+      ) {
+        setErro('Esse e-mail já está cadastrado.');
+      } else if (
+        mensagemErro.includes('usuario_apelido_unique') ||
+        mensagemErro.includes('database error saving new user') ||
+        mensagemErro.includes('database_error')
+      ) {
+        setErro('Esse nome de usuário já está sendo utilizado.');
+      } else {
+        setErro('Não foi possível concluir o cadastro. Tente novamente.');
+      }
+
+      return;
+    }
+
     global.currentUserName = nomeUsuario;
 
     navigation.navigate('Principal', {
       apelido: nomeUsuario,
       nomeUsuario,
-      email: route?.params?.email,
-      senha: route?.params?.senha,
+      email,
+      senha,
     });
   };
 
@@ -190,9 +233,10 @@ export default function CadastroFavoritos({ navigation, route }) {
               ]}
               onPress={handleRegister}
               activeOpacity={0.8}
+              disabled={carregando}
             >
               <Text style={styles.registerButtonText}>
-                Cadastrar
+                {carregando ? 'Aguarde...' : 'Cadastrar'}
               </Text>
             </TouchableOpacity>
           </View>

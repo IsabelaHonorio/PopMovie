@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,20 +12,39 @@ import {
 
 import { commonStyles, useTheme } from './theme';
 
-import { supabase } from './lib/supabase';
-
-export default function CadastroScreen({ navigation }) {
+export default function CadastroScreen({ navigation, route }) {
   const { background, primary, text } = useTheme();
 
-  const [apelido, setApelido] = useState('');
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const senhaInicial = route?.params?.senha || '';
+
+  const [apelido, setApelido] = useState(
+    route?.params?.apelido || route?.params?.nomeUsuario || ''
+  );
+  const [email, setEmail] = useState(route?.params?.email || '');
+  const [senha, setSenha] = useState(senhaInicial);
+  const [confirmarSenha, setConfirmarSenha] = useState(senhaInicial);
 
   const [erroApelido, setErroApelido] = useState('');
   const [erroEmail, setErroEmail] = useState('');
   const [erroSenha, setErroSenha] = useState('');
   const [erroConfirmarSenha, setErroConfirmarSenha] = useState('');
+
+  useEffect(() => {
+    const apelidoSalvo =
+      route?.params?.apelido || route?.params?.nomeUsuario || '';
+    const emailSalvo = route?.params?.email || '';
+    const senhaSalva = route?.params?.senha || '';
+
+    setApelido(apelidoSalvo);
+    setEmail(emailSalvo);
+    setSenha(senhaSalva);
+    setConfirmarSenha(senhaSalva);
+  }, [
+    route?.params?.apelido,
+    route?.params?.nomeUsuario,
+    route?.params?.email,
+    route?.params?.senha,
+  ]);
 
   const cadastrar = async () => {
     setErroApelido('');
@@ -70,32 +89,11 @@ export default function CadastroScreen({ navigation }) {
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password: senha,
-      options: {
-        data: {
-          apelido: apelido.trim(),
-        },
-      },
-    });
-
-    if (error) {
-      console.log('Erro ao cadastrar usuário:', error);
-
-      if (error.message.includes('usuario_apelido_unique')) {
-        setErroApelido('Esse apelido já está sendo utilizado.');
-      } else {
-        setErroEmail(error.message);
-      }
-
-      return;
-    }
-
     navigation.navigate('CadastroFavoritos', {
       apelido: apelido.trim(),
       nomeUsuario: apelido.trim(),
       email: email.trim(),
+      senha,
     });
   };
 
