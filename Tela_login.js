@@ -165,9 +165,14 @@ export default function TelaLogin({ navigation }) {
         )}
       </View>
 
-      <Text style={[styles.esqueceuSenha, { color: textSoft }]}>
-        Esqueceu a senha?
-      </Text>
+     <Pressable
+       onPress={() => navigation.navigate('RedefinirSenha')}
+      style={styles.esqueceuSenha}
+      >
+  <Text style={{ color: textSoft, fontSize: 12 }}>
+    Esqueceu a senha?
+  </Text>
+</Pressable>
 
       <Pressable
         style={[
