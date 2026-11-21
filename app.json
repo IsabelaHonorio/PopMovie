@@ -1,0 +1,8 @@
+{
+  "expo": {
+    "scheme": "popmovie",
+    "plugins": [
+      "expo-status-bar"
+    ]
+  }
+}

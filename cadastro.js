@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,12 +10,98 @@ import {
   Image,
 } from 'react-native';
 
-export default function CadastroScreen() {
+import { commonStyles, useTheme } from './theme';
+
+export default function CadastroScreen({ navigation, route }) {
+  const { background, primary, text } = useTheme();
+
+  const senhaInicial = route?.params?.senha || '';
+
+  const [apelido, setApelido] = useState(
+    route?.params?.apelido || route?.params?.nomeUsuario || ''
+  );
+  const [email, setEmail] = useState(route?.params?.email || '');
+  const [senha, setSenha] = useState(senhaInicial);
+  const [confirmarSenha, setConfirmarSenha] = useState(senhaInicial);
+
+  const [erroApelido, setErroApelido] = useState('');
+  const [erroEmail, setErroEmail] = useState('');
+  const [erroSenha, setErroSenha] = useState('');
+  const [erroConfirmarSenha, setErroConfirmarSenha] = useState('');
+
+  useEffect(() => {
+    const apelidoSalvo =
+      route?.params?.apelido || route?.params?.nomeUsuario || '';
+    const emailSalvo = route?.params?.email || '';
+    const senhaSalva = route?.params?.senha || '';
+
+    setApelido(apelidoSalvo);
+    setEmail(emailSalvo);
+    setSenha(senhaSalva);
+    setConfirmarSenha(senhaSalva);
+  }, [
+    route?.params?.apelido,
+    route?.params?.nomeUsuario,
+    route?.params?.email,
+    route?.params?.senha,
+  ]);
+
+  const cadastrar = async () => {
+    setErroApelido('');
+    setErroEmail('');
+    setErroSenha('');
+    setErroConfirmarSenha('');
+
+    let formularioValido = true;
+
+    // Validação do apelido
+    if (apelido.trim().length < 1) {
+      setErroApelido('Digite pelo menos um caractere no apelido.');
+      formularioValido = false;
+    }
+
+    // Validação do e-mail
+    const formatoEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!formatoEmail.test(email.trim())) {
+      setErroEmail('Digite um e-mail válido. Exemplo: usuario@gmail.com');
+      formularioValido = false;
+    }
+
+    // Validação da senha
+    const possuiEspecial = /[^a-zA-Z0-9]/.test(senha);
+
+    if (senha.length < 6 || !possuiEspecial) {
+      setErroSenha(
+        'A senha deve ter pelo menos 6 caracteres e um caractere especial.'
+      );
+      formularioValido = false;
+    }
+
+    // Validação da confirmação da senha
+    if (senha !== confirmarSenha) {
+      setErroConfirmarSenha('As senhas não são iguais.');
+      formularioValido = false;
+    }
+
+    // Interromper se houver algum erro
+    if (!formularioValido) {
+      return;
+    }
+
+    navigation.navigate('CadastroFavoritos', {
+      apelido: apelido.trim(),
+      nomeUsuario: apelido.trim(),
+      email: email.trim(),
+      senha,
+    });
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
       <StatusBar
-        backgroundColor="#000000"
-        barStyle="light-content"
+        backgroundColor={background}
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
       />
 
       <ScrollView
@@ -25,58 +110,112 @@ export default function CadastroScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Pressable
-          style={styles.backButton}
+          style={commonStyles.backButton}
           accessibilityLabel="Voltar"
+          onPress={() => navigation.goBack()}
         >
-          <Text style={styles.backArrow}>‹</Text>
+          <Text style={[commonStyles.backArrow, { color: primary }]}>‹</Text>
         </Pressable>
 
-        
         <View style={styles.logoContainer}>
           <Image
             source={require('./assets/Logo.png')}
-            style={styles.logo}
+            style={commonStyles.logo}
+            resizeMode="contain"
           />
         </View>
 
-        <Text style={styles.title}>Cadastro</Text>
+        <Text style={[commonStyles.title, { color: text }]}>
+          Cadastro
+        </Text>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Apelido</Text>
+          <Text style={[commonStyles.label, { color: text }]}>
+            APELIDO
+          </Text>
+
           <TextInput
-            style={styles.input}
-            placeholder=""
-            placeholderTextColor="#777"
+            style={commonStyles.input}
+            value={apelido}
+            onChangeText={(valor) => {
+              setApelido(valor);
+              setErroApelido('');
+            }}
             autoCapitalize="none"
           />
 
-          <Text style={styles.label}>E-mail</Text>
+          {erroApelido !== '' && (
+            <Text style={styles.mensagemErro}>{erroApelido}</Text>
+          )}
+
+          <Text style={[commonStyles.label, { color: text }]}>
+            E-MAIL
+          </Text>
+
           <TextInput
-            style={styles.input}
-            placeholder=""
+            style={commonStyles.input}
+            value={email}
+            onChangeText={(valor) => {
+              setEmail(valor);
+              setErroEmail('');
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoCorrect={false}
           />
 
-          <Text style={styles.label}>Senha</Text>
-          <TextInput
-            style={styles.input}
-            placeholder=""
-            secureTextEntry
-          />
+          {erroEmail !== '' && (
+            <Text style={styles.mensagemErro}>{erroEmail}</Text>
+          )}
 
-          <Text style={styles.label}>
-            Confirmar Senha
+          <Text style={[commonStyles.label, { color: text }]}>
+            SENHA
           </Text>
+
           <TextInput
-            style={styles.input}
-            placeholder=""
+            style={commonStyles.input}
+            value={senha}
+            onChangeText={(valor) => {
+              setSenha(valor);
+              setErroSenha('');
+              setErroConfirmarSenha('');
+            }}
             secureTextEntry
           />
+
+          {erroSenha !== '' && (
+            <Text style={styles.mensagemErro}>{erroSenha}</Text>
+          )}
+
+          <Text style={[commonStyles.label, { color: text }]}>
+            CONFIRMAR SENHA
+          </Text>
+
+          <TextInput
+            style={commonStyles.input}
+            value={confirmarSenha}
+            onChangeText={(valor) => {
+              setConfirmarSenha(valor);
+              setErroConfirmarSenha('');
+            }}
+            secureTextEntry
+          />
+
+          {erroConfirmarSenha !== '' && (
+            <Text style={styles.mensagemErro}>
+              {erroConfirmarSenha}
+            </Text>
+          )}
         </View>
 
-        <Pressable style={styles.button}>
-          <Text style={styles.buttonText}>
+        <Pressable
+          style={[
+            commonStyles.primaryButton,
+            { backgroundColor: primary, shadowColor: primary },
+          ]}
+          onPress={cadastrar}
+        >
+          <Text style={commonStyles.primaryButtonText}>
             Adicionar favoritos
           </Text>
         </Pressable>
@@ -86,111 +225,29 @@ export default function CadastroScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
-
   content: {
     flexGrow: 1,
-    paddingHorizontal: 42,
-    paddingBottom: 32,
-  },
-
-  backButton: {
-    position: 'absolute',
-    top: 27,
-    left: 40,
-    zIndex: 1,
-    width: 32,
-    height: 35,
-    justifyContent: 'center',
-  },
-
-  backArrow: {
-    color: '#963BFF',
-    fontSize: 48,
-    lineHeight: 48,
-    marginTop: -7,
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+    alignItems: 'center',
   },
 
   logoContainer: {
     alignItems: 'center',
-    marginTop: 40,
-    height: 91,
     justifyContent: 'center',
-  },
-
-  logoText: {
-    fontSize: 47,
-    lineHeight: 53,
-  },
-
-  logoName: {
-    marginTop: -8,
-    fontSize: 27,
-    fontWeight: '900',
-    fontStyle: 'italic',
-  },
-
-  logoPop: {
-    color: '#FFC928',
-  },
-
-  logoMovie: {
-    color: '#FFFFFF',
-  },
-
-  title: {
-    color: '#FFFFFF',
-    fontSize: 40,
-    fontWeight: '400',
-    textAlign: 'center',
-    marginTop: 3,
-    marginBottom: 24,
+    marginTop: 26,
   },
 
   form: {
     width: '100%',
+    maxWidth: 360,
+    marginBottom: 20,
   },
 
-  label: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '600',
-    marginLeft: 4,
-    marginBottom: 8,
-  },
-
-  input: {
-    height: 62,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    color: '#000000',
-    fontSize: 18,
-    marginBottom: 21,
-  },
-
-  button: {
-    alignSelf: 'center',
-    backgroundColor: '#963BFF',
-    borderRadius: 40,
-    minHeight: 64,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 24,
-    elevation: 8,
-    shadowColor: '#963BFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-  },
-
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '600',
+  mensagemErro: {
+    color: '#FF5252',
+    fontSize: 12,
+    marginTop: -12,
+    marginBottom: 14,
   },
 });

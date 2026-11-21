@@ -1,0 +1,294 @@
+import React, { useCallback, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+} from 'react-native';
+
+import { Ionicons, Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { COLORS, commonStyles, useTheme } from './theme';
+import { getWatchlist, substituirWatchlist } from './watchlistStore';
+import { buscarFilmesPorFuncionalidade } from './lib/supabase';
+
+export default function MinhaListaScreen({ navigation, route }) {
+  const {
+    background,
+    border,
+    primary,
+    surfaceElevated,
+    text,
+    textSoft,
+  } = useTheme();
+  const { apelido, senha } = route.params || {};
+  const [search, setSearch] = useState('');
+  const [filmes, setFilmes] = useState(getWatchlist());
+
+  useFocusEffect(
+    useCallback(() => {
+      let ativo = true;
+
+      buscarFilmesPorFuncionalidade('lista')
+        .then((filmesBanco) => {
+          if (!ativo) return;
+          substituirWatchlist(filmesBanco);
+          setFilmes(filmesBanco);
+        })
+        .catch((erro) => console.error('Erro ao carregar Minha Lista:', erro));
+
+      return () => {
+        ativo = false;
+      };
+    }, [])
+  );
+
+  const filmesFiltrados = filmes.filter((filme) =>
+    (filme.title || filme.original_title || filme.titulo || '')
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
+  return (
+    <View style={[commonStyles.container, { backgroundColor: background }]}>
+      {/* Logo na parte superior */}
+      <View style={styles.areaSuperior}>
+        <Image
+          source={require('./assets/PopMovielogo.png')}
+          style={styles.imagem_inicial}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* Título abaixo da logo */}
+      <Text style={[commonStyles.title, { color: text }]}>Minha Lista</Text>
+
+      {/* Desenho e frases abaixo do título */}
+      <View style={styles.cabecalhoLista}>
+        <Image
+          source={require('./assets/Minha_Lista.png')}
+          style={styles.minhaListaImagem}
+          resizeMode="contain"
+        />
+
+        <View style={styles.frases}>
+          <Text style={[styles.text, { color: text }]}>
+            Sua lista de assistir mais tarde.
+          </Text>
+
+          <Text style={[styles.text, { color: text }]}>
+            Assista quando quiser!
+          </Text>
+        </View>
+      </View>
+
+      {/* Lista de filmes */}
+      <FlatList
+        style={styles.flatList}
+        data={filmesFiltrados}
+        keyExtractor={(item) => String(item.id)}
+        numColumns={3}
+        columnWrapperStyle={styles.columnWrapper}
+        contentContainerStyle={styles.listaFilmes}
+        showsVerticalScrollIndicator={false}
+        indicatorStyle="white"
+        ListEmptyComponent={
+          <Text style={[styles.emptyText, { color: textSoft }]}>
+            Nenhum filme encontrado.
+          </Text>
+        }
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.itemFilme}
+            activeOpacity={0.8}
+            onPress={() =>
+              navigation.navigate('DetalhesFilme', {
+                filme: item,
+                idFilme: item.id,
+                apelido,
+                senha,
+              })
+            }
+          >
+            <Image
+              source={{
+                uri: item.poster_path
+                  ? `https://image.tmdb.org/t/p/w200${item.poster_path}`
+                  : item.imagem,
+              }}
+              style={styles.poster}
+            />
+          </TouchableOpacity>
+        )}
+      />
+
+      {/* Barra de navegação inferior */}
+      <View
+        style={[
+          styles.barraNavegacao,
+          { backgroundColor: surfaceElevated, borderTopColor: border },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('Principal', { apelido, senha })}
+        >
+          <Ionicons name="home-outline" size={29} color={primary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('Buscar', { apelido, senha })}
+        >
+          <Ionicons name="search-outline" size={29} color={primary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('MinhaLista', { apelido, senha })}
+        >
+          <Ionicons name="list-outline" size={29} color={primary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate('ConteudosAvaliados', { apelido, senha })
+          }
+        >
+          <Feather name="check" size={29} color={primary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.itemNav}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('Perfil', { apelido, senha })}
+        >
+          <Ionicons name="person-outline" size={29} color={primary} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  areaSuperior: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 0,
+  },
+
+  imagem_inicial: {
+    width: 250,
+    height: 105,
+    marginTop: 0,
+  },
+
+  cabecalhoLista: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 15,
+    marginTop: 5,
+    marginBottom: 5,
+  },
+
+  minhaListaImagem: {
+    width: 85,
+    height: 85,
+  },
+
+  frases: {
+    flex: 1,
+    marginLeft: 5,
+  },
+
+  text: {
+    color: COLORS.text,
+    fontSize: 15,
+    marginVertical: 3,
+  },
+
+  areaBusca: {
+    position: 'relative',
+    width: '85%',
+    maxWidth: 360,
+    marginTop: 15,
+    marginBottom: 15,
+  },
+
+  barrinha: {
+    width: '100%',
+    height: 38,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingRight: 40,
+    color: '#000000',
+  },
+
+  lupa: {
+    position: 'absolute',
+    right: 12,
+    top: 9,
+  },
+
+  flatList: {
+    width: '100%',
+    flex: 1,
+  },
+
+  listaFilmes: {
+    paddingHorizontal: 15,
+    paddingBottom: 85,
+    paddingTop: 6,
+  },
+
+  columnWrapper: {
+    marginBottom: 18,
+  },
+
+  itemFilme: {
+    width: '33.333%',
+  },
+
+  poster: {
+    width: 96,
+    height: 146,
+    resizeMode: 'cover',
+    borderRadius: 10,
+  },
+
+  emptyText: {
+    color: COLORS.text,
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+  },
+
+  barraNavegacao: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#1e1e1e',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    height: 60,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+
+  itemNav: {
+    padding: 10,
+  },
+});

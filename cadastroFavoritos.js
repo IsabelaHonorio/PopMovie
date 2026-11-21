@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   View,
@@ -11,41 +10,166 @@ import {
   Image,
 } from "react-native";
 
-export default function App() {
-  const [favorites, setFavorites] = useState(Array(6).fill(null));
+import { getFavorites, setFavoriteAt } from './favoritesStore';
+import {
+  getFavoriteMovies,
+  isMovieFavorite,
+  toggleFavoriteMovie as toggleGlobalFavoriteMovie,
+} from './favoriteMoviesStore';
+import { useTheme } from './theme';
+import { supabase, salvarFuncionalidadesFilme } from './lib/supabase';
+
+export default function CadastroFavoritos({ navigation, route }) {
+  const { background, primary, primaryDark, text } = useTheme();
+
+  const [favorites, setFavorites] = useState(getFavorites());
+  const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(false);
+
+  useEffect(() => {
+    if (
+      route?.params?.selectedMovie &&
+      route.params.slotIndex !== undefined
+    ) {
+      const { selectedMovie, slotIndex } = route.params;
+      const previousFavorite = favorites[slotIndex];
+      const selectedId = String(selectedMovie.id);
+      const previousId = previousFavorite ? String(previousFavorite.id) : null;
+
+      if (previousId && previousId !== selectedId) {
+        toggleGlobalFavoriteMovie(previousFavorite);
+      }
+
+      if (!isMovieFavorite(selectedId)) {
+        toggleGlobalFavoriteMovie(selectedMovie);
+      }
+
+      const nextFavorites = setFavoriteAt(slotIndex, selectedMovie);
+
+      setFavorites(nextFavorites);
+      setErro('');
+
+      navigation.setParams((prevParams) => ({
+        ...prevParams,
+        selectedMovie: undefined,
+        slotIndex: undefined,
+        currentFavorite: undefined,
+      }));
+    }
+  }, [route?.params?.selectedMovie, route?.params.slotIndex]);
 
   const handleBack = () => {
-    // Navegação será implementada depois.
+    navigation.goBack();
   };
 
   const handleAddFavorite = (index) => {
-    // Seleção de filmes será implementada depois.
-    console.log("Adicionar favorito:", index + 1);
+    navigation.navigate('BuscaSemBarra', {
+      slotIndex: index,
+      currentFavorite: favorites[index] || null,
+      apelido: route?.params?.apelido || route?.params?.nomeUsuario,
+      nomeUsuario: route?.params?.nomeUsuario || route?.params?.apelido,
+      email: route?.params?.email,
+      senha: route?.params?.senha,
+    });
   };
 
-  const handleRegister = () => {
-    // Cadastro será implementado depois.
+  const handleRegister = async () => {
+    const quantidadeFavoritos = favorites.filter(
+      (favorite) => favorite !== null && favorite !== undefined
+    ).length;
+
+    if (quantidadeFavoritos < 3) {
+      setErro('Você precisa escolher pelo menos 3 filmes para continuar.');
+      return;
+    }
+
+    setErro('');
+    setCarregando(true);
+
+    const nomeUsuario =
+      route?.params?.apelido || route?.params?.nomeUsuario || 'Fulano';
+    const email = route?.params?.email;
+    const senha = route?.params?.senha;
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: senha,
+      options: {
+        data: {
+          apelido: nomeUsuario,
+        },
+      },
+    });
+
+    setCarregando(false);
+
+    if (error) {
+      console.log('Erro ao cadastrar usuário:', error);
+
+      const mensagemErro = error.message.toLowerCase();
+
+      if (
+        error.code === 'user_already_exists' ||
+        mensagemErro.includes('already registered') ||
+        mensagemErro.includes('already been registered')
+      ) {
+        setErro('Esse e-mail já está cadastrado.');
+      } else if (
+        mensagemErro.includes('usuario_apelido_unique') ||
+        mensagemErro.includes('database error saving new user') ||
+        mensagemErro.includes('database_error')
+      ) {
+        setErro('Esse nome de usuário já está sendo utilizado.');
+      } else {
+        setErro('Não foi possível concluir o cadastro. Tente novamente.');
+      }
+
+      return;
+    }
+
+    global.currentUserName = nomeUsuario;
+
+    for (const filmeFavorito of getFavoriteMovies()) {
+      salvarFuncionalidadesFilme(filmeFavorito.id, {
+        favoritos: true,
+      }).catch((erro) => {
+        console.log('Erro ao salvar favorito no banco:', erro);
+      });
+    }
+
+    navigation.navigate('Principal', {
+      apelido: nomeUsuario,
+      nomeUsuario,
+      email,
+      senha,
+    });
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: background }]}
+    >
       <StatusBar
-        barStyle="light-content"
-        backgroundColor="#000000"
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
+        backgroundColor={background}
       />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.container}>
+        <View
+          style={[styles.container, { backgroundColor: background }]}
+        >
           {/* Botão voltar */}
           <TouchableOpacity
             style={styles.backButton}
             onPress={handleBack}
             activeOpacity={0.7}
           >
-            <Text style={styles.backArrow}>‹</Text>
+            <Text style={[styles.backArrow, { color: primary }]}>
+              ‹
+            </Text>
           </TouchableOpacity>
 
           {/* Logo PopMovie */}
@@ -57,9 +181,21 @@ export default function App() {
             />
           </View>
 
+          {/* Instrução */}
+          <Text style={[styles.instrucao, { color: text }]}>
+            Escolha pelo menos 3 filmes para continuar!
+          </Text>
+
+          {/* Mensagem de erro */}
+          {erro !== '' && (
+            <Text style={styles.mensagemErro}>
+              {erro}
+            </Text>
+          )}
+
           {/* Conteúdos favoritos */}
           <View style={styles.favoritesSection}>
-            <Text style={styles.heading}>
+            <Text style={[styles.heading, { color: text }]}>
               Conteúdos favoritos:
             </Text>
 
@@ -67,27 +203,49 @@ export default function App() {
               {favorites.map((favorite, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={styles.favoriteSlot}
+                  style={[
+                    styles.favoriteSlot,
+                    {
+                      shadowColor: primary,
+                      borderColor: primary,
+                      backgroundColor: background,
+                    },
+                  ]}
                   onPress={() => handleAddFavorite(index)}
                   activeOpacity={0.75}
                   accessibilityLabel={`Adicionar favorito ${index + 1}`}
                 >
-                  <View style={styles.plusContainer}>
-                    <View style={styles.plusVertical} />
-                    <View style={styles.plusHorizontal} />
-                  </View>
+                  {favorite ? (
+                    <Image
+                      source={{ uri: favorite.poster }}
+                      style={styles.favoritePoster}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.plusContainer}>
+                      <View style={styles.plusVertical} />
+                      <View style={styles.plusHorizontal} />
+                    </View>
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
 
             {/* Botão cadastrar */}
             <TouchableOpacity
-              style={styles.registerButton}
+              style={[
+                styles.registerButton,
+                {
+                  backgroundColor: primary,
+                  shadowColor: primaryDark,
+                },
+              ]}
               onPress={handleRegister}
               activeOpacity={0.8}
+              disabled={carregando}
             >
               <Text style={styles.registerButtonText}>
-                Cadastrar
+                {carregando ? 'Aguarde...' : 'Cadastrar'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -129,7 +287,6 @@ const styles = StyleSheet.create({
   },
 
   backArrow: {
-    color: "#9638FF",
     fontSize: 46,
     lineHeight: 46,
     fontWeight: "300",
@@ -144,50 +301,24 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
 
-  popcorn: {
-    fontSize: 66,
-    lineHeight: 76,
+  logo: {
+    width: 260,
+    height: 91,
+    resizeMode: "contain",
+  },
+
+  instrucao: {
+    fontSize: 15,
     textAlign: "center",
-    marginBottom: -4,
+    marginTop: 8,
+    marginBottom: 12,
   },
 
-  logoTextContainer: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "center",
-    marginTop: -2,
-  },
-
-  logoPop: {
-    color: "#FFC928",
-    fontSize: 34,
-    fontWeight: "900",
-    fontStyle: "italic",
-    letterSpacing: -2,
-    textShadowColor: "#6B2AC5",
-    textShadowOffset: { width: 1, height: 3 },
-    textShadowRadius: 2,
-  },
-
-  logoMovie: {
-    color: "#FFFFFF",
-    fontSize: 32,
-    fontWeight: "900",
-    fontStyle: "italic",
-    letterSpacing: -2,
-    textShadowColor: "#6B2AC5",
-    textShadowOffset: { width: 1, height: 3 },
-    textShadowRadius: 2,
-  },
-
-  logoUnderline: {
-    width: 80,
-    height: 8,
-    borderTopWidth: 4,
-    borderColor: "#9638FF",
-    borderRadius: 50,
-    marginTop: 5,
-    transform: [{ rotate: "-7deg" }],
+  mensagemErro: {
+    color: "#FF5252",
+    fontSize: 13,
+    textAlign: "center",
+    marginBottom: 12,
   },
 
   favoritesSection: {
@@ -198,7 +329,6 @@ const styles = StyleSheet.create({
 
   heading: {
     width: "100%",
-    color: "#FFFFFF",
     fontSize: 32,
     fontWeight: "400",
     textAlign: "center",
@@ -218,16 +348,21 @@ const styles = StyleSheet.create({
   favoriteSlot: {
     width: 120,
     height: 120,
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-
-    shadowColor: "#9B7BFF",
+    overflow: "hidden",
+    borderWidth: 1,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 5,
+  },
+
+  favoritePoster: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 20,
   },
 
   plusContainer: {
@@ -257,12 +392,9 @@ const styles = StyleSheet.create({
     width: 248,
     height: 64,
     borderRadius: 36,
-    backgroundColor: "#9638FF",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 37,
-
-    shadowColor: "#9638FF",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,

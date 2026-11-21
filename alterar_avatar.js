@@ -1,53 +1,152 @@
+
 import React, { useState } from 'react';
+
 import {
   StyleSheet,
   Text,
   View,
   Image,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   ScrollView,
-  Alert,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from './theme';
+import { supabase } from './lib/supabase';
 
-export default function App() {
-  // Avatares salvos na pasta assets
+export default function AlterarAvatar({
+  voltar,
+  fotoPerfil,
+  setFotoPerfil,
+  navigation,
+}) {
+  const {
+    background,
+    border,
+    primary,
+    primaryDark,
+    surface,
+    text,
+    textSoft,
+  } = useTheme();
+
   const avatares = [
-    { id: '10', imagem: require('./assets/10.png') },
-    { id: '11', imagem: require('./assets/11.png') },
-    { id: '18', imagem: require('./assets/18.png') },
-    { id: '19', imagem: require('./assets/19.png') },
-    { id: '3', imagem: require('./assets/3.png') },
-    { id: '30', imagem: require('./assets/30.png') },
-    { id: '5', imagem: require('./assets/5.png') },
-    { id: '6', imagem: require('./assets/6.png') },
-    { id: '13', imagem: require('./assets/15.png') },
+    { id: 10, imagem: require('./assets/avatar/10.png') },
+    { id: 11, imagem: require('./assets/avatar/11.png') },
+    { id: 18, imagem: require('./assets/avatar/18.png') },
+    { id: 19, imagem: require('./assets/avatar/19.png') },
+    { id: 3, imagem: require('./assets/avatar/3.png') },
+    { id: 30, imagem: require('./assets/avatar/30.png') },
+    { id: 5, imagem: require('./assets/avatar/5.png') },
+    { id: 6, imagem: require('./assets/avatar/6.png') },
+    { id: 15, imagem: require('./assets/avatar/15.png') },
   ];
 
-  // Começa com o primeiro avatar selecionado
-  const [avatarSelecionado, setAvatarSelecionado] = useState(0);
+  const indiceAvatarAtual = avatares.findIndex(
+    (avatar) => avatar.imagem === fotoPerfil
+  );
+
+  const [avatarSelecionado, setAvatarSelecionado] = useState(
+    indiceAvatarAtual >= 0 ? indiceAvatarAtual : 7
+  );
+
+  const [salvando, setSalvando] = useState(false);
+  const [mensagem, setMensagem] = useState('');
+
+  const voltarParaPerfil = () => {
+    if (typeof voltar === 'function') {
+      voltar();
+      return;
+    }
+
+    if (navigation && typeof navigation.goBack === 'function') {
+      navigation.goBack();
+    }
+  };
+
+  // SALVAR AVATAR NO SUPABASE
+  async function confirmarAvatar() {
+    try {
+      setSalvando(true);
+      setMensagem('');
+
+      const { data: dadosUsuario, error: erroUsuario } =
+        await supabase.auth.getUser();
+
+      if (erroUsuario) throw erroUsuario;
+
+      const usuario = dadosUsuario?.user;
+
+      if (!usuario) {
+        throw new Error('Você precisa estar logado para salvar o avatar.');
+      }
+
+      const avatarEscolhido = avatares[avatarSelecionado];
+
+      const { data, error } = await supabase
+        .from('usuario')
+        .update({
+          avatar: avatarEscolhido.id,
+        })
+        .eq('id_usuario', usuario.id)
+        .select('avatar')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          'O cadastro não foi atualizado. Verifique as permissões da tabela usuario no Supabase.'
+        );
+      }
+
+      // Atualiza a foto do perfil depois da confirmação do banco.
+      setFotoPerfil?.(avatarEscolhido.imagem);
+
+      voltarParaPerfil();
+
+    } catch (erro) {
+      console.error('Erro ao salvar avatar:', erro);
+
+      setMensagem(
+        erro.message || 'Não foi possível salvar o avatar.'
+      );
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   return (
-    <View style={estilos.conteiner}>
+    <View
+      style={[
+        estilos.conteiner,
+        { backgroundColor: background },
+      ]}
+    >
       <StatusBar
-        barStyle="light-content"
-        backgroundColor="#000000"
+        barStyle={
+          background === '#FFFFFF'
+            ? 'dark-content'
+            : 'light-content'
+        }
+        backgroundColor={background}
       />
 
-      {/* Cabeçalho */}
       <View style={estilos.cabecalho}>
         <TouchableOpacity
-          style={estilos.botaoVoltar}
+          style={[
+            estilos.botaoVoltar,
+            { borderColor: border },
+          ]}
           activeOpacity={0.7}
-          onPress={() => Alert.alert('Voltar', 'Botão voltar pressionado!')}
+          onPress={voltarParaPerfil}
+          accessibilityLabel="Voltar ao perfil"
         >
           <Ionicons
             name="chevron-back"
             size={22}
-            color="#a855f7"
+            color={primary}
           />
         </TouchableOpacity>
 
@@ -62,18 +161,34 @@ export default function App() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={estilos.conteudoRolagem}
       >
-        {/* Título */}
-        <Text style={estilos.tituloTela}>
+        <Text
+          style={[
+            estilos.tituloTela,
+            { color: primary },
+          ]}
+        >
           Alterar foto de perfil
         </Text>
 
-        <Text style={estilos.descricao}>
+        <Text
+          style={[
+            estilos.descricao,
+            { color: textSoft },
+          ]}
+        >
           Escolha o avatar que mais combina com você!
         </Text>
 
-        {/* Avatar selecionado */}
         <View style={estilos.secaoAvatarAtual}>
-          <View style={estilos.molduraAvatarAtual}>
+          <View
+            style={[
+              estilos.molduraAvatarAtual,
+              {
+                borderColor: primary,
+                backgroundColor: surface,
+              },
+            ]}
+          >
             <Image
               source={avatares[avatarSelecionado].imagem}
               style={estilos.fotoAvatarAtual}
@@ -81,27 +196,42 @@ export default function App() {
             />
           </View>
 
-          <Text style={estilos.etiquetaAtual}>
+          <Text
+            style={[
+              estilos.etiquetaAtual,
+              { color: primary },
+            ]}
+          >
             AVATAR SELECIONADO
           </Text>
         </View>
 
         <View style={estilos.divisor} />
 
-        {/* Opções */}
-        <Text style={estilos.subtituloOpcoes}>
-          Escolha seu novo avatar
+        <Text
+          style={[
+            estilos.subtituloOpcoes,
+            { color: text },
+          ]}
+        >
+          Escolha seu novo avatar:
         </Text>
 
-        {/* Grade de avatares redondos */}
         <View style={estilos.gradeAvatares}>
           {avatares.map((avatar, indice) => (
             <TouchableOpacity
               key={avatar.id}
               style={[
                 estilos.itemAvatar,
-                avatarSelecionado === indice &&
-                  estilos.avatarSelecionadoContainer,
+                {
+                  backgroundColor: surface,
+                  borderColor: border,
+                },
+                avatarSelecionado === indice && {
+                  borderWidth: 3,
+                  borderColor: primary,
+                  backgroundColor: primaryDark,
+                },
               ]}
               onPress={() => setAvatarSelecionado(indice)}
               activeOpacity={0.75}
@@ -113,7 +243,12 @@ export default function App() {
               />
 
               {avatarSelecionado === indice && (
-                <View style={estilos.marcaSelecao}>
+                <View
+                  style={[
+                    estilos.marcaSelecao,
+                    { backgroundColor: primary },
+                  ]}
+                >
                   <Ionicons
                     name="checkmark"
                     size={14}
@@ -125,19 +260,24 @@ export default function App() {
           ))}
         </View>
 
-        {/* Confirmar */}
+        {mensagem !== '' && (
+          <Text style={estilos.mensagemErro}>
+            {mensagem}
+          </Text>
+        )}
+
         <TouchableOpacity
-          style={estilos.botaoConfirmar}
+          style={[
+            estilos.botaoConfirmar,
+            { backgroundColor: primary },
+            salvando && { opacity: 0.6 },
+          ]}
           activeOpacity={0.8}
-          onPress={() =>
-            Alert.alert(
-              'Sucesso!',
-              'Seu avatar foi selecionado!'
-            )
-          }
+          onPress={confirmarAvatar}
+          disabled={salvando}
         >
           <Text style={estilos.textoBotaoConfirmar}>
-            Confirmar
+            {salvando ? 'Salvando...' : 'Confirmar'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -148,27 +288,27 @@ export default function App() {
 const estilos = StyleSheet.create({
   conteiner: {
     flex: 1,
-    backgroundColor: '#000000',
     paddingTop: 10,
   },
 
   cabecalho: {
-    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 20,
     marginBottom: 16,
+    position: 'relative',
   },
 
   botaoVoltar: {
+    position: 'absolute',
+    left: 20,
     width: 38,
     height: 38,
-    backgroundColor: '#121215',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#222226',
-    marginRight: 16,
+    zIndex: 1,
   },
 
   logo: {
@@ -178,12 +318,11 @@ const estilos = StyleSheet.create({
 
   conteudoRolagem: {
     paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingBottom: 40,
     alignItems: 'center',
   },
 
   tituloTela: {
-    color: '#a855f7',
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 8,
@@ -191,15 +330,14 @@ const estilos = StyleSheet.create({
   },
 
   descricao: {
-    color: '#9ca3af',
-    fontSize: 13,
+    fontSize: 15,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
 
   secaoAvatarAtual: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
 
   molduraAvatarAtual: {
@@ -207,12 +345,10 @@ const estilos = StyleSheet.create({
     height: 125,
     borderRadius: 65,
     borderWidth: 3,
-    borderColor: '#a855f7',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 4,
     marginBottom: 10,
-    backgroundColor: '#121215',
     overflow: 'hidden',
   },
 
@@ -223,7 +359,6 @@ const estilos = StyleSheet.create({
   },
 
   etiquetaAtual: {
-    color: '#a855f7',
     fontSize: 11,
     fontWeight: 'bold',
     letterSpacing: 1.5,
@@ -237,47 +372,36 @@ const estilos = StyleSheet.create({
   },
 
   subtituloOpcoes: {
-    color: '#ffffff',
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '600',
     alignSelf: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 16,
   },
 
   gradeAvatares: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     width: '100%',
     marginBottom: 24,
   },
 
   itemAvatar: {
-    width: '22%',
+    width: '30%',
     aspectRatio: 1,
-    marginBottom: 18,
-    marginRight: '4%',
+    marginBottom: 16,
     borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121215',
     borderWidth: 2,
-    borderColor: '#29252f',
     padding: 3,
     position: 'relative',
   },
 
-  // Remove a margem direita do quarto item de cada linha
   fotoAvatarOpcao: {
     width: '100%',
     height: '100%',
     borderRadius: 100,
-  },
-
-  avatarSelecionadoContainer: {
-    borderWidth: 3,
-    borderColor: '#a855f7',
-    backgroundColor: '#1e1b2e',
   },
 
   marcaSelecao: {
@@ -287,7 +411,6 @@ const estilos = StyleSheet.create({
     width: 23,
     height: 23,
     borderRadius: 12,
-    backgroundColor: '#9333ea',
     borderWidth: 2,
     borderColor: '#000000',
     justifyContent: 'center',
@@ -295,9 +418,8 @@ const estilos = StyleSheet.create({
   },
 
   botaoConfirmar: {
-    backgroundColor: '#9333ea',
     height: 52,
-    width: '85%',
+    width: '100%',
     borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
@@ -305,8 +427,16 @@ const estilos = StyleSheet.create({
   },
 
   textoBotaoConfirmar: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#ffffff',
+  },
+
+  mensagemErro: {
+    color: '#ff7777',
+    textAlign: 'center',
+    marginBottom: 12,
   },
 });
+
+

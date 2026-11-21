@@ -1,0 +1,15 @@
+		Design
+
+-Deixar o cadastro e login mais padronizados
+-Alterar as flatlists de ConteudosAvaliados e Minha lista
+-Fazer o Alterar Senha
+-Implementar o Alterar Tema
+-Fazer a animação de sorteio
+-Revisar e melhorar as telas no geral
+
+
+		Lógica
+
+-Descobrir exatamente de onde tirar todos os dados dos filmes
+-Fazer a lógica do sorteio
+-Implementar o sorteio

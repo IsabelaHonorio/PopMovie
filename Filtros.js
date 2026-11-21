@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -8,24 +7,23 @@ import {
   StyleSheet,
   StatusBar,
 } from 'react-native';
+import { COLORS, commonStyles, useTheme } from './theme';
 
 const generos = [
-  'Todos', 'Ação', 'Aventura',
-  'Animação', 'Comédia', 'Drama',
-  'Terror', 'Suspense', 'Fantasia',
-  'Ficção Científica', 'Romance',
-  'Crime', 'Documentário',
+  'Todos', 'Ação', 'Animação',
+  'Aventura', 'Comédia', 'Crime', 'Drama',
+  'Documentário', 'Fantasia', 'Ficção Científica',
+  'Romance', 'Suspense', 'Terror',
 ];
 
 const duracoes = [
   'Qualquer duração', 'Até 1h',
-  '1h - 1h30', '2h - 2h30',
-  '1h30 - 2h', '2h30+',
+  '1h - 1h30', '1h30 - 2h',
+  '2h - 2h30', '2h30+',
 ];
 
 const plataformas = [
-  'Todos', 'Netflix', 'Prime Video',
-  'Max', 'Disney+', 'Outra',
+  'Todos', 'Disney+', 'Max', 'Netflix', 'Prime Video', 'Outra',
 ];
 
 const anos = [
@@ -40,14 +38,15 @@ function FiltroCard({
   opcoes,
   selecionados,
   onSelecionar,
-  tipo = 'multi',
 }) {
+  const { border, primary, surface, text, textSoft } = useTheme();
+
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>{titulo}</Text>
+    <View style={[styles.card, { backgroundColor: surface, borderColor: primary }]}>
+      <Text style={[styles.cardTitle, { color: text }]}>{titulo}</Text>
 
       {subtitulo ? (
-        <Text style={styles.subtitle}>{subtitulo}</Text>
+        <Text style={[styles.subtitle, { color: textSoft }]}>{subtitulo}</Text>
       ) : null}
 
       <View style={styles.options}>
@@ -60,7 +59,10 @@ function FiltroCard({
               onPress={() => onSelecionar(opcao)}
               style={[
                 styles.option,
+                { borderColor: primary },
+                { backgroundColor: surface },
                 ativo && styles.optionActive,
+                ativo && { backgroundColor: primary },
               ]}
               accessibilityRole="button"
               accessibilityState={{ selected: ativo }}
@@ -68,6 +70,7 @@ function FiltroCard({
               <Text
                 style={[
                   styles.optionText,
+                  { color: text },
                   ativo && styles.optionTextActive,
                 ]}
                 numberOfLines={1}
@@ -83,18 +86,15 @@ function FiltroCard({
   );
 }
 
-export default function FiltrosScreen() {
-  const [generosSelecionados, setGenerosSelecionados] =
-    useState(['Todos']);
+export default function FiltrosScreen({ navigation, route }) {
+  const { background, primary, surfaceElevated, text } = useTheme();
+  const { apelido, senha } = route.params || {};
+  const voltarParaPrincipal = () => navigation.navigate('Principal', { apelido, senha });
 
-  const [duracaoSelecionada, setDuracaoSelecionada] =
-    useState(['Qualquer duração']);
-
-  const [plataformasSelecionadas, setPlataformasSelecionadas] =
-    useState(['Todos']);
-
-  const [anosSelecionados, setAnosSelecionados] =
-    useState(['Todos']);
+  const [generosSelecionados, setGenerosSelecionados] = useState(['Todos']);
+  const [duracaoSelecionada, setDuracaoSelecionada] = useState(['Qualquer duração']);
+  const [plataformasSelecionadas, setPlataformasSelecionadas] = useState(['Todos']);
+  const [anosSelecionados, setAnosSelecionados] = useState(['Todos']);
 
   function alternar(opcao, selecionados, setSelecionados, tipo = 'multi') {
     if (tipo === 'single') {
@@ -118,74 +118,77 @@ export default function FiltrosScreen() {
     setSelecionados(novos.length ? novos : ['Todos']);
   }
 
+  const aplicarFiltros = () => {
+    const filtros = {
+      generos: generosSelecionados.includes('Todos') ? [] : generosSelecionados,
+      duracao: duracaoSelecionada[0] || 'Qualquer duração',
+      plataformas: plataformasSelecionadas.includes('Todos') ? [] : plataformasSelecionadas,
+      ano: anosSelecionados[0] || 'Todos',
+    };
+
+    navigation.navigate('ConteudoSorteado', {
+      filtros,
+      apelido,
+      senha,
+      sorteioId: Date.now(),
+    });
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: background }]}>
       <StatusBar
-        backgroundColor="#000000"
-        barStyle="light-content"
+        backgroundColor={background}
+        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
       />
 
       <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          accessibilityLabel="Voltar"
-        >
-          <Text style={styles.backArrow}>‹</Text>
+        <Pressable style={commonStyles.backButton} accessibilityLabel="Voltar" onPress={voltarParaPrincipal}>
+          <Text style={[commonStyles.backArrow, { color: primary }]}>‹</Text>
         </Pressable>
 
-        <Text style={styles.title}>Filtros</Text>
+        <Text style={[styles.title, { color: text }]}>Filtros</Text>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-      >
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={true}>
         <FiltroCard
           titulo="Gênero"
           subtitulo="Escolha um ou mais gêneros"
           opcoes={generos}
           selecionados={generosSelecionados}
-          onSelecionar={opcao =>
-            alternar(opcao, generosSelecionados, setGenerosSelecionados)
-          }
+          onSelecionar={opcao => alternar(opcao, generosSelecionados, setGenerosSelecionados)}
         />
 
         <FiltroCard
           titulo="Duração"
           opcoes={duracoes}
           selecionados={duracaoSelecionada}
-          onSelecionar={opcao =>
-            alternar(opcao, duracaoSelecionada, setDuracaoSelecionada, 'single')
-          }
-          tipo="single"
+          onSelecionar={opcao => alternar(opcao, duracaoSelecionada, setDuracaoSelecionada, 'single')}
         />
 
         <FiltroCard
           titulo="Plataforma de Streaming"
           opcoes={plataformas}
           selecionados={plataformasSelecionadas}
-          onSelecionar={opcao =>
-            alternar(opcao, plataformasSelecionadas, setPlataformasSelecionadas)
-          }
+          onSelecionar={opcao => alternar(opcao, plataformasSelecionadas, setPlataformasSelecionadas)}
         />
 
         <FiltroCard
           titulo="Ano de lançamento"
           opcoes={anos}
           selecionados={anosSelecionados}
-          onSelecionar={opcao =>
-            alternar(opcao, anosSelecionados, setAnosSelecionados)
-          }
+          onSelecionar={opcao => alternar(opcao, anosSelecionados, setAnosSelecionados, 'single')}
         />
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: background }]}>
         <Pressable
-          style={styles.applyButton}
-          onPress={() => {}}
+          style={[
+            styles.applyButton,
+            { backgroundColor: primary, shadowColor: primary },
+          ]}
+          onPress={aplicarFiltros}
         >
           <Text style={styles.applyText}>Aplicar Filtros</Text>
         </Pressable>
@@ -197,7 +200,6 @@ export default function FiltrosScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
   },
 
   header: {
@@ -206,26 +208,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  backButton: {
-    position: 'absolute',
-    left: 40,
-    top: 26,
-    zIndex: 1,
-    width: 32,
-    height: 40,
-    justifyContent: 'center',
-  },
-
-  backArrow: {
-    color: '#963BFF',
-    fontSize: 48,
-    lineHeight: 48,
-    marginTop: -7,
-  },
-
   title: {
-    color: '#FFFFFF',
-    fontSize: 46,
+    fontSize: 42,
     fontWeight: '700',
   },
 
@@ -241,9 +225,8 @@ const styles = StyleSheet.create({
 
   card: {
     borderWidth: 1,
-    borderColor: '#C800FF',
+    borderColor: COLORS.primary,
     borderRadius: 22,
-    backgroundColor: '#080008',
     paddingHorizontal: 11,
     paddingTop: 10,
     paddingBottom: 10,
@@ -251,14 +234,12 @@ const styles = StyleSheet.create({
   },
 
   cardTitle: {
-    color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '600',
     textAlign: 'center',
   },
 
   subtitle: {
-    color: '#FFFFFF',
     fontSize: 16,
     marginLeft: 41,
     marginTop: 1,
@@ -278,25 +259,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#963BFF',
+    borderColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000000',
     flexGrow: 1,
   },
 
   optionActive: {
-    backgroundColor: '#963BFF',
+    backgroundColor: COLORS.primary,
   },
 
   optionText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
 
   optionTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
 
   footer: {
@@ -305,28 +284,27 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 105,
-    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   applyButton: {
-    backgroundColor: '#963BFF',
+    backgroundColor: COLORS.primary,
     borderRadius: 40,
     paddingHorizontal: 12,
     minHeight: 64,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 8,
-    shadowColor: '#963BFF',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 12,
   },
 
   applyText: {
-    color: '#FFFFFF',
-    fontSize: 36,
+    color: COLORS.white,
+    fontSize: 30,
     fontWeight: '600',
   },
 });
