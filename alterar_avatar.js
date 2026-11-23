@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+
 import {
   StyleSheet,
   Text,
@@ -11,6 +13,7 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from './theme';
+import { supabase } from './lib/supabase';
 
 export default function AlterarAvatar({
   voltar,
@@ -27,50 +30,115 @@ export default function AlterarAvatar({
     text,
     textSoft,
   } = useTheme();
+
   const avatares = [
-    { id: '10', imagem: require('./assets/avatar/10.png') },
-    { id: '11', imagem: require('./assets/avatar/11.png') },
-    { id: '18', imagem: require('./assets/avatar/18.png') },
-    { id: '19', imagem: require('./assets/avatar/19.png') },
-    { id: '3', imagem: require('./assets/avatar/3.png') },
-    { id: '30', imagem: require('./assets/avatar/30.png') },
-    { id: '5', imagem: require('./assets/avatar/5.png') },
-    { id: '6', imagem: require('./assets/avatar/6.png') },
-    { id: '13', imagem: require('./assets/avatar/15.png') },
+    { id: 10, imagem: require('./assets/avatar/10.png') },
+    { id: 11, imagem: require('./assets/avatar/11.png') },
+    { id: 18, imagem: require('./assets/avatar/18.png') },
+    { id: 19, imagem: require('./assets/avatar/19.png') },
+    { id: 3, imagem: require('./assets/avatar/3.png') },
+    { id: 30, imagem: require('./assets/avatar/30.png') },
+    { id: 5, imagem: require('./assets/avatar/5.png') },
+    { id: 6, imagem: require('./assets/avatar/6.png') },
+    { id: 15, imagem: require('./assets/avatar/15.png') },
   ];
 
   const indiceAvatarAtual = avatares.findIndex(
     (avatar) => avatar.imagem === fotoPerfil
   );
+
   const [avatarSelecionado, setAvatarSelecionado] = useState(
-    indiceAvatarAtual >= 0 ? indiceAvatarAtual : 0
+    indiceAvatarAtual >= 0 ? indiceAvatarAtual : 7
   );
 
+  const [salvando, setSalvando] = useState(false);
+  const [mensagem, setMensagem] = useState('');
+
   const voltarParaPerfil = () => {
-    if (voltar) {
+    if (typeof voltar === 'function') {
       voltar();
       return;
     }
 
-    navigation?.goBack();
+    if (navigation && typeof navigation.goBack === 'function') {
+      navigation.goBack();
+    }
   };
 
-  const confirmarAvatar = () => {
-    setFotoPerfil?.(avatares[avatarSelecionado].imagem);
-    voltarParaPerfil();
-  };
+  // SALVAR AVATAR NO SUPABASE
+  async function confirmarAvatar() {
+    try {
+      setSalvando(true);
+      setMensagem('');
+
+      const { data: dadosUsuario, error: erroUsuario } =
+        await supabase.auth.getUser();
+
+      if (erroUsuario) throw erroUsuario;
+
+      const usuario = dadosUsuario?.user;
+
+      if (!usuario) {
+        throw new Error('Você precisa estar logado para salvar o avatar.');
+      }
+
+      const avatarEscolhido = avatares[avatarSelecionado];
+
+      const { data, error } = await supabase
+        .from('usuario')
+        .update({
+          avatar: avatarEscolhido.id,
+        })
+        .eq('id_usuario', usuario.id)
+        .select('avatar')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          'O cadastro não foi atualizado. Verifique as permissões da tabela usuario no Supabase.'
+        );
+      }
+
+      // Atualiza a foto do perfil depois da confirmação do banco.
+      setFotoPerfil?.(avatarEscolhido.imagem);
+
+      voltarParaPerfil();
+
+    } catch (erro) {
+      console.error('Erro ao salvar avatar:', erro);
+
+      setMensagem(
+        erro.message || 'Não foi possível salvar o avatar.'
+      );
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   return (
-    <View style={[estilos.conteiner, { backgroundColor: background }]}>
+    <View
+      style={[
+        estilos.conteiner,
+        { backgroundColor: background },
+      ]}
+    >
       <StatusBar
-        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
+        barStyle={
+          background === '#FFFFFF'
+            ? 'dark-content'
+            : 'light-content'
+        }
         backgroundColor={background}
       />
 
-      {/* Cabeçalho */}
       <View style={estilos.cabecalho}>
         <TouchableOpacity
-          style={estilos.botaoVoltar}
+          style={[
+            estilos.botaoVoltar,
+            { borderColor: border },
+          ]}
           activeOpacity={0.7}
           onPress={voltarParaPerfil}
           accessibilityLabel="Voltar ao perfil"
@@ -93,21 +161,32 @@ export default function AlterarAvatar({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={estilos.conteudoRolagem}
       >
-        {/* Título */}
-        <Text style={[estilos.tituloTela, { color: primary }]}>
+        <Text
+          style={[
+            estilos.tituloTela,
+            { color: primary },
+          ]}
+        >
           Alterar foto de perfil
         </Text>
 
-        <Text style={[estilos.descricao, { color: textSoft }]}>
+        <Text
+          style={[
+            estilos.descricao,
+            { color: textSoft },
+          ]}
+        >
           Escolha o avatar que mais combina com você!
         </Text>
 
-        {/* Avatar selecionado */}
         <View style={estilos.secaoAvatarAtual}>
           <View
             style={[
               estilos.molduraAvatarAtual,
-              { borderColor: primary, backgroundColor: surface },
+              {
+                borderColor: primary,
+                backgroundColor: surface,
+              },
             ]}
           >
             <Image
@@ -117,33 +196,42 @@ export default function AlterarAvatar({
             />
           </View>
 
-          <Text style={[estilos.etiquetaAtual, { color: primary }]}>
+          <Text
+            style={[
+              estilos.etiquetaAtual,
+              { color: primary },
+            ]}
+          >
             AVATAR SELECIONADO
           </Text>
         </View>
 
         <View style={estilos.divisor} />
 
-        {/* Opções */}
-        <Text style={[estilos.subtituloOpcoes, { color: text }]}>
+        <Text
+          style={[
+            estilos.subtituloOpcoes,
+            { color: text },
+          ]}
+        >
           Escolha seu novo avatar:
         </Text>
 
-        {/* Grade de avatares redondos */}
         <View style={estilos.gradeAvatares}>
           {avatares.map((avatar, indice) => (
             <TouchableOpacity
               key={avatar.id}
               style={[
                 estilos.itemAvatar,
-                avatarSelecionado === indice &&
-                  estilos.avatarSelecionadoContainer,
+                {
+                  backgroundColor: surface,
+                  borderColor: border,
+                },
                 avatarSelecionado === indice && {
+                  borderWidth: 3,
                   borderColor: primary,
                   backgroundColor: primaryDark,
                 },
-                { backgroundColor: surface, borderColor: border },
-                avatarSelecionado === indice && { borderColor: primary, backgroundColor: primaryDark },
               ]}
               onPress={() => setAvatarSelecionado(indice)}
               activeOpacity={0.75}
@@ -172,17 +260,24 @@ export default function AlterarAvatar({
           ))}
         </View>
 
-        {/* Confirmar */}
+        {mensagem !== '' && (
+          <Text style={estilos.mensagemErro}>
+            {mensagem}
+          </Text>
+        )}
+
         <TouchableOpacity
           style={[
             estilos.botaoConfirmar,
             { backgroundColor: primary },
+            salvando && { opacity: 0.6 },
           ]}
           activeOpacity={0.8}
           onPress={confirmarAvatar}
+          disabled={salvando}
         >
           <Text style={estilos.textoBotaoConfirmar}>
-            Confirmar
+            {salvando ? 'Salvando...' : 'Confirmar'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -228,7 +323,6 @@ const estilos = StyleSheet.create({
   },
 
   tituloTela: {
-    color: '#a855f7',
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 8,
@@ -251,7 +345,6 @@ const estilos = StyleSheet.create({
     height: 125,
     borderRadius: 65,
     borderWidth: 3,
-    borderColor: '#a855f7',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 4,
@@ -266,7 +359,6 @@ const estilos = StyleSheet.create({
   },
 
   etiquetaAtual: {
-    color: '#a855f7',
     fontSize: 11,
     fontWeight: 'bold',
     letterSpacing: 1.5,
@@ -312,12 +404,6 @@ const estilos = StyleSheet.create({
     borderRadius: 100,
   },
 
-  avatarSelecionadoContainer: {
-    borderWidth: 3,
-    borderColor: '#a855f7',
-    backgroundColor: '#1e1b2e',
-  },
-
   marcaSelecao: {
     position: 'absolute',
     right: -2,
@@ -325,7 +411,6 @@ const estilos = StyleSheet.create({
     width: 23,
     height: 23,
     borderRadius: 12,
-    backgroundColor: '#9333ea',
     borderWidth: 2,
     borderColor: '#000000',
     justifyContent: 'center',
@@ -333,7 +418,6 @@ const estilos = StyleSheet.create({
   },
 
   botaoConfirmar: {
-    backgroundColor: '#9333ea',
     height: 52,
     width: '100%',
     borderRadius: 26,
@@ -345,5 +429,14 @@ const estilos = StyleSheet.create({
   textoBotaoConfirmar: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#ffffff',
+  },
+
+  mensagemErro: {
+    color: '#ff7777',
+    textAlign: 'center',
+    marginBottom: 12,
   },
 });
+
+

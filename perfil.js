@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
@@ -13,17 +14,35 @@ import {
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { COLORS, commonStyles, useTheme } from './theme';
 
-import AlterarSenha from './alterar_senha';
+import AlterarSenha from './recuperar_senha';
 import Bloqueados from './bloqueados';
 import AlterarAvatar from './alterar_avatar';
 import AlterarTema from './Alterar_tema';
+
 import {
   getFavoriteMovies,
   subscribeToFavoriteMovies,
   substituirFavoritos,
   toggleFavoriteMovie,
 } from './favoriteMoviesStore';
-import { buscarFilmesPorFuncionalidade } from './lib/supabase';
+
+import {
+  supabase,
+  buscarFilmesPorFuncionalidade,
+} from './lib/supabase';
+
+// AVATARES DISPONÍVEIS
+const AVATARES_PERFIL = {
+  3: require('./assets/avatar/3.png'),
+  5: require('./assets/avatar/5.png'),
+  6: require('./assets/avatar/6.png'),
+  10: require('./assets/avatar/10.png'),
+  11: require('./assets/avatar/11.png'),
+  15: require('./assets/avatar/15.png'),
+  18: require('./assets/avatar/18.png'),
+  19: require('./assets/avatar/19.png'),
+  30: require('./assets/avatar/30.png'),
+};
 
 export default function PerfilScreen({ navigation, route }) {
   const {
@@ -35,14 +54,72 @@ export default function PerfilScreen({ navigation, route }) {
     text,
     textSoft,
   } = useTheme();
+
   const { apelido, senha } = route.params || {};
-  const nomeExibido = apelido || global.currentUserName || 'Fulano';
+
+  const [nomeExibido, setNomeExibido] = useState(
+    apelido || 'Fulano'
+  );
 
   const [telaAtual, setTelaAtual] = useState('Perfil');
-  const [filmesFavoritos, setFilmesFavoritos] = useState(getFavoriteMovies());
 
-  useEffect(() => subscribeToFavoriteMovies(setFilmesFavoritos), []);
+  const [filmesFavoritos, setFilmesFavoritos] = useState(
+    getFavoriteMovies()
+  );
 
+  const [fotoPerfil, setFotoPerfil] = useState(
+    AVATARES_PERFIL[6]
+  );
+
+  // CARREGAR FOTO E APELIDO DO USUÁRIO
+  useEffect(() => {
+    async function carregarPerfil() {
+      try {
+        const { data: dadosUsuario, error: erroUsuario } =
+          await supabase.auth.getUser();
+
+        if (erroUsuario) {
+          throw erroUsuario;
+        }
+
+        const usuario = dadosUsuario.user;
+
+        if (!usuario) {
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('usuario')
+          .select('apelido, avatar')
+          .eq('id_usuario', usuario.id)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        if (data?.apelido) {
+          setNomeExibido(data.apelido);
+        }
+
+        // RECUPERAR AVATAR SALVO NO BANCO
+        if (data?.avatar && AVATARES_PERFIL[data.avatar]) {
+          setFotoPerfil(AVATARES_PERFIL[data.avatar]);
+        }
+      } catch (erro) {
+        console.error('Erro ao carregar perfil:', erro);
+      }
+    }
+
+    carregarPerfil();
+  }, []);
+
+  // ATUALIZAR A LISTA DE FAVORITOS
+  useEffect(() => {
+    return subscribeToFavoriteMovies(setFilmesFavoritos);
+  }, []);
+
+  // BUSCAR FAVORITOS NO SUPABASE
   useEffect(() => {
     let ativo = true;
 
@@ -53,20 +130,22 @@ export default function PerfilScreen({ navigation, route }) {
           setFilmesFavoritos(filmesBanco);
         }
       })
-      .catch((erro) => console.error('Erro ao carregar favoritos:', erro));
+      .catch((erro) => {
+        console.error('Erro ao carregar favoritos:', erro);
+      });
 
     return () => {
       ativo = false;
     };
   }, []);
 
-  const [fotoPerfil, setFotoPerfil] = useState(
-    require('./assets/avatar/6.png')
-  );
-
   // CONEXÃO COM AS OUTRAS TELAS
   if (telaAtual === 'AlterarSenha') {
-    return <AlterarSenha voltar={() => setTelaAtual('Perfil')} />;
+    return (
+      <AlterarSenha
+        voltar={() => setTelaAtual('Perfil')}
+      />
+    );
   }
 
   if (telaAtual === 'Bloqueados') {
@@ -100,13 +179,22 @@ export default function PerfilScreen({ navigation, route }) {
   }
 
   return (
-    <View style={[commonStyles.container, { backgroundColor: background }]}>
+    <View
+      style={[
+        commonStyles.container,
+        { backgroundColor: background },
+      ]}
+    >
       <StatusBar
-        barStyle={background === '#FFFFFF' ? 'dark-content' : 'light-content'}
+        barStyle={
+          background === '#FFFFFF'
+            ? 'dark-content'
+            : 'light-content'
+        }
         backgroundColor={background}
       />
 
-      {/* LOGO PADRONIZADA */}
+      {/* LOGO */}
       <View style={estilos.areaSuperior}>
         <Image
           source={require('./assets/PopMovielogo.png')}
@@ -123,18 +211,29 @@ export default function PerfilScreen({ navigation, route }) {
         <View style={estilos.secaoPerfil}>
           <Image
             source={fotoPerfil}
-            style={[estilos.fotoPerfil, { borderColor: primary }]}
+            style={[
+              estilos.fotoPerfil,
+              { borderColor: primary },
+            ]}
           />
 
           <View style={estilos.infoPerfil}>
-            <Text style={[estilos.saudacao, { color: primary }]}>
+            <Text
+              style={[
+                estilos.saudacao,
+                { color: primary },
+              ]}
+            >
               Olá, {nomeExibido}!
             </Text>
 
             <TouchableOpacity
               onPress={() => setTelaAtual('AlterarAvatar')}
               activeOpacity={0.7}
-              style={[estilos.botaoEditar, { backgroundColor: surface }]}
+              style={[
+                estilos.botaoEditar,
+                { backgroundColor: surface },
+              ]}
               accessibilityLabel="Alterar avatar"
             >
               <Feather
@@ -153,9 +252,21 @@ export default function PerfilScreen({ navigation, route }) {
             activeOpacity={0.7}
             onPress={() => setTelaAtual('AlterarSenha')}
           >
-            <Text style={[estilos.textoOpcao, { color: text }]}>Alterar senha</Text>
+            <Text
+              style={[
+                estilos.textoOpcao,
+                { color: text },
+              ]}
+            >
+              Alterar senha
+            </Text>
 
-            <View style={[estilos.acaoOpcao, { backgroundColor: surface }]}>
+            <View
+              style={[
+                estilos.acaoOpcao,
+                { backgroundColor: surface },
+              ]}
+            >
               <Feather
                 name="edit-2"
                 size={15}
@@ -169,9 +280,21 @@ export default function PerfilScreen({ navigation, route }) {
             activeOpacity={0.7}
             onPress={() => setTelaAtual('AlterarTema')}
           >
-            <Text style={[estilos.textoOpcao, { color: text }]}>Alterar tema</Text>
+            <Text
+              style={[
+                estilos.textoOpcao,
+                { color: text },
+              ]}
+            >
+              Alterar tema
+            </Text>
 
-            <View style={[estilos.acaoOpcao, { backgroundColor: surface }]}>
+            <View
+              style={[
+                estilos.acaoOpcao,
+                { backgroundColor: surface },
+              ]}
+            >
               <Feather
                 name="edit-2"
                 size={15}
@@ -185,11 +308,21 @@ export default function PerfilScreen({ navigation, route }) {
             activeOpacity={0.7}
             onPress={() => setTelaAtual('Bloqueados')}
           >
-            <Text style={[estilos.textoOpcao, { color: text }]}>
+            <Text
+              style={[
+                estilos.textoOpcao,
+                { color: text },
+              ]}
+            >
               Conteúdos bloqueados
             </Text>
 
-            <View style={[estilos.acaoOpcao, { backgroundColor: surface }]}>
+            <View
+              style={[
+                estilos.acaoOpcao,
+                { backgroundColor: surface },
+              ]}
+            >
               <Feather
                 name="edit-2"
                 size={15}
@@ -200,7 +333,14 @@ export default function PerfilScreen({ navigation, route }) {
         </View>
 
         {/* FILMES FAVORITOS */}
-        <Text style={[estilos.tituloSecao, { color: text }]}>Favoritos</Text>
+        <Text
+          style={[
+            estilos.tituloSecao,
+            { color: text },
+          ]}
+        >
+          Favoritos
+        </Text>
 
         <FlatList
           style={estilos.listaFavoritos}
@@ -211,17 +351,30 @@ export default function PerfilScreen({ navigation, route }) {
           contentContainerStyle={estilos.listaFilmes}
           scrollEnabled={false}
           ListEmptyComponent={
-            <Text style={[estilos.mensagemVazia, { color: textSoft }]}>
+            <Text
+              style={[
+                estilos.mensagemVazia,
+                { color: textSoft },
+              ]}
+            >
               Você ainda não tem filmes favoritos.
             </Text>
           }
           renderItem={({ item }) => {
-            const posterUrl = item.poster_path || item.poster || item.imagem;
+            const posterUrl =
+              item.poster_path || item.poster || item.imagem;
+
             const posterUri = posterUrl?.startsWith('http')
               ? posterUrl
               : posterUrl
                 ? `https://image.tmdb.org/t/p/w200${posterUrl}`
                 : null;
+
+            const nomeFilme =
+              item.title ||
+              item.original_title ||
+              item.nome ||
+              'filme';
 
             return (
               <View style={estilos.cartaoFilme}>
@@ -235,20 +388,27 @@ export default function PerfilScreen({ navigation, route }) {
                       senha,
                     })
                   }
-                  accessibilityLabel={`Abrir detalhes de ${item.title || item.original_title || item.nome || 'filme'}`}
+                  accessibilityLabel={`Abrir detalhes de ${nomeFilme}`}
                 >
-                  <Image
-                    source={{ uri: posterUri }}
-                    style={estilos.posterFilme}
-                    resizeMode="cover"
-                  />
+                  {posterUri ? (
+                    <Image
+                      source={{ uri: posterUri }}
+                      style={estilos.posterFilme}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={estilos.posterFilme} />
+                  )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[estilos.botaoFavorito, { backgroundColor: primary }]}
+                  style={[
+                    estilos.botaoFavorito,
+                    { backgroundColor: primary },
+                  ]}
                   onPress={() => toggleFavoriteMovie(item)}
                   activeOpacity={0.7}
-                  accessibilityLabel={`Remover ${item.title || item.original_title || item.nome || 'filme'} dos favoritos`}
+                  accessibilityLabel={`Remover ${nomeFilme} dos favoritos`}
                 >
                   <Ionicons
                     name="heart"
@@ -266,7 +426,10 @@ export default function PerfilScreen({ navigation, route }) {
       <View
         style={[
           estilos.barraNavegacao,
-          { backgroundColor: surfaceElevated, borderTopColor: border },
+          {
+            backgroundColor: surfaceElevated,
+            borderTopColor: border,
+          },
         ]}
       >
         <TouchableOpacity
@@ -315,7 +478,10 @@ export default function PerfilScreen({ navigation, route }) {
           style={estilos.itemNav}
           activeOpacity={0.7}
           onPress={() =>
-            navigation.navigate('ConteudosAvaliados', { apelido, senha })
+            navigation.navigate('ConteudosAvaliados', {
+              apelido,
+              senha,
+            })
           }
         >
           <Feather

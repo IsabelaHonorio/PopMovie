@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -8,29 +9,44 @@ import {
   StatusBar,
   ScrollView,
 } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
+
 import {
   BACKGROUND_OPTIONS,
   THEME_OPTIONS,
   useTheme,
 } from './theme';
 
-export default function AlterarTemaScreen({ navigation, route, voltar }) {
+export default function AlterarTemaScreen({
+  navigation,
+  route,
+  voltar,
+}) {
   const { apelido, senha } = route?.params || {};
+
+  const temaContexto = useTheme();
+
   const {
     background,
     backgroundMode,
     border,
     primary,
-    setBackgroundMode,
-    setPrimary,
+    salvarTema,
     surface,
     text,
     textSoft,
-  } = useTheme();
+  } = temaContexto;
+
   const [corSelecionada, setCorSelecionada] = useState(primary);
   const [fundoSelecionado, setFundoSelecionado] = useState(backgroundMode);
-  const temaAtual = THEME_OPTIONS.find((tema) => tema.primary === primary);
+  const [salvando, setSalvando] = useState(false);
+  const [mensagem, setMensagem] = useState('');
+
+  const temaAtual = THEME_OPTIONS.find(
+    (tema) => tema.primary === primary
+  );
+
   const fundoAtual = BACKGROUND_OPTIONS.find(
     (opcao) => opcao.value === backgroundMode
   );
@@ -41,27 +57,54 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
       return;
     }
 
-    if (navigation && typeof navigation.goBack === 'function' && navigation.canGoBack?.()) {
+    if (
+      navigation &&
+      typeof navigation.goBack === 'function' &&
+      navigation.canGoBack?.()
+    ) {
       navigation.goBack();
       return;
     }
 
     if (navigation && typeof navigation.navigate === 'function') {
       navigation.navigate('Perfil', { apelido, senha });
-      return;
     }
   };
 
-  const aplicarTema = () => {
-    setPrimary(corSelecionada);
-    setBackgroundMode(fundoSelecionado);
-    voltarParaPerfil();
+  // SALVAR E APLICAR O TEMA
+  const aplicarTema = async () => {
+    try {
+      setSalvando(true);
+      setMensagem('');
+
+      if (typeof salvarTema !== 'function') {
+        throw new Error(
+          'A função salvarTema não foi encontrada no ThemeProvider. Verifique o arquivo theme.js.'
+        );
+      }
+
+      await salvarTema(corSelecionada, fundoSelecionado);
+
+      voltarParaPerfil();
+    } catch (erro) {
+      console.error('Erro ao salvar tema:', erro);
+
+      setMensagem(
+        erro?.message || 'Não foi possível salvar o tema.'
+      );
+    } finally {
+      setSalvando(false);
+    }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: background }]}>
       <StatusBar
-        barStyle={backgroundMode === 'light' ? 'dark-content' : 'light-content'}
+        barStyle={
+          backgroundMode === 'light'
+            ? 'dark-content'
+            : 'light-content'
+        }
         backgroundColor={background}
       />
 
@@ -72,7 +115,11 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
           onPress={voltarParaPerfil}
           accessibilityLabel="Voltar ao perfil"
         >
-          <Ionicons name="chevron-back" size={22} color={primary} />
+          <Ionicons
+            name="chevron-back"
+            size={22}
+            color={primary}
+          />
         </TouchableOpacity>
 
         <Image
@@ -86,46 +133,77 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.conteudo}
       >
-        <Text style={[styles.titulo, { color: primary }]}>Alterar tema</Text>
+        <Text style={[styles.titulo, { color: primary }]}>
+          Alterar tema
+        </Text>
+
         <Text style={[styles.descricao, { color: textSoft }]}>
           Personalize a cor principal do PopMovie.
         </Text>
 
-        <View style={[styles.cartaoAtual, { backgroundColor: surface, borderColor: border }]}>
-          <Text style={[styles.rotuloAtual, { color: textSoft }]}>TEMA ATUAL</Text>
+        <View
+          style={[
+            styles.cartaoAtual,
+            {
+              backgroundColor: surface,
+              borderColor: border,
+            },
+          ]}
+        >
+          <Text style={[styles.rotuloAtual, { color: textSoft }]}>
+            TEMA ATUAL
+          </Text>
 
           <View style={styles.linhaTemaAtual}>
-            <View style={[styles.amostraAtual, { backgroundColor: primary }]} />
+            <View
+              style={[
+                styles.amostraAtual,
+                { backgroundColor: primary },
+              ]}
+            />
+
             <View style={styles.infoTemaAtual}>
               <Text style={[styles.nomeTemaAtual, { color: text }]}>
                 {temaAtual?.name || 'Roxo'}
               </Text>
+
               <Text style={[styles.codigoCor, { color: textSoft }]}>
                 {primary.toUpperCase()}
               </Text>
             </View>
-            <Ionicons name="checkmark-circle" size={25} color={primary} />
+
+            <Ionicons
+              name="checkmark-circle"
+              size={25}
+              color={primary}
+            />
           </View>
         </View>
 
         <View style={styles.secaoTemas}>
-          <Text style={[styles.subtitulo, { color: text }]}>Escolha uma cor</Text>
+          <Text style={[styles.subtitulo, { color: text }]}>
+            Escolha uma cor
+          </Text>
+
           <Text style={[styles.ajuda, { color: textSoft }]}>
             A cor escolhida será usada nos destaques do aplicativo.
           </Text>
 
           <View style={styles.gradeTemas}>
             {THEME_OPTIONS.map((tema) => {
-              const selecionado = corSelecionada === tema.primary;
+              const selecionado =
+                corSelecionada === tema.primary;
 
               return (
                 <TouchableOpacity
                   key={tema.primary}
                   style={[
                     styles.cartaoTema,
-                    { backgroundColor: surface, borderColor: border },
-                    selecionado && {
-                      borderColor: tema.primary,
+                    {
+                      backgroundColor: surface,
+                      borderColor: selecionado
+                        ? tema.primary
+                        : border,
                     },
                   ]}
                   onPress={() => setCorSelecionada(tema.primary)}
@@ -141,18 +219,27 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
                     ]}
                   >
                     {selecionado && (
-                      <Ionicons name="checkmark" size={23} color="#FFFFFF" />
+                      <Ionicons
+                        name="checkmark"
+                        size={23}
+                        color="#FFFFFF"
+                      />
                     )}
                   </View>
+
                   <Text
                     style={[
                       styles.nomeTema,
-                      { color: text },
-                      selecionado && { color: tema.primary },
+                      {
+                        color: selecionado
+                          ? tema.primary
+                          : text,
+                      },
                     ]}
                   >
                     {tema.name}
                   </Text>
+
                   <Text style={[styles.codigoTema, { color: textSoft }]}>
                     {tema.primary.toUpperCase()}
                   </Text>
@@ -166,13 +253,15 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
           <Text style={[styles.subtitulo, { color: text }]}>
             Escolha o fundo
           </Text>
+
           <Text style={[styles.ajuda, { color: textSoft }]}>
             O texto se ajusta automaticamente ao fundo selecionado.
           </Text>
 
           <View style={styles.gradeFundos}>
             {BACKGROUND_OPTIONS.map((opcao) => {
-              const selecionado = fundoSelecionado === opcao.value;
+              const selecionado =
+                fundoSelecionado === opcao.value;
 
               return (
                 <TouchableOpacity
@@ -181,7 +270,9 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
                     styles.cartaoFundo,
                     {
                       backgroundColor: opcao.background,
-                      borderColor: selecionado ? primary : border,
+                      borderColor: selecionado
+                        ? primary
+                        : border,
                     },
                     selecionado && styles.cartaoFundoSelecionado,
                   ]}
@@ -205,30 +296,56 @@ export default function AlterarTemaScreen({ navigation, route, voltar }) {
                       />
                     )}
                   </View>
-                  <Text style={[styles.nomeFundo, { color: opcao.text }]}>
+
+                  <Text
+                    style={[
+                      styles.nomeFundo,
+                      { color: opcao.text },
+                    ]}
+                  >
                     {opcao.name}
                   </Text>
-                  <Text style={[styles.exemploFundo, { color: opcao.text }]}>
+
+                  <Text
+                    style={[
+                      styles.exemploFundo,
+                      { color: opcao.text },
+                    ]}
+                  >
                     Aa
                   </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
+
           <Text style={[styles.fundoAtual, { color: textSoft }]}>
             Fundo atual: {fundoAtual?.name || 'Preto'}
           </Text>
         </View>
 
+        {mensagem !== '' && (
+          <Text style={styles.mensagemErro}>
+            {mensagem}
+          </Text>
+        )}
+
         <TouchableOpacity
           style={[
             styles.botaoAplicar,
-            { backgroundColor: corSelecionada, shadowColor: corSelecionada },
+            {
+              backgroundColor: corSelecionada,
+              shadowColor: corSelecionada,
+            },
+            salvando && { opacity: 0.6 },
           ]}
           onPress={aplicarTema}
           activeOpacity={0.8}
+          disabled={salvando}
         >
-          <Text style={styles.textoBotao}>Aplicar tema</Text>
+          <Text style={styles.textoBotao}>
+            {salvando ? 'Salvando...' : 'Aplicar tema'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -375,7 +492,6 @@ const styles = StyleSheet.create({
   },
 
   nomeTema: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -448,5 +564,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+
+  mensagemErro: {
+    color: '#ff7777',
+    textAlign: 'center',
+    marginTop: 15,
   },
 });
