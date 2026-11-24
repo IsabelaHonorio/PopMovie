@@ -22,10 +22,6 @@ const duracoes = [
   '2h - 2h30', '2h30+',
 ];
 
-const plataformas = [
-  'Todos', 'Disney+', 'Max', 'Netflix', 'Prime Video', 'Outra',
-];
-
 const anos = [
   'Todos', 'Antes de 2000',
   '2000 - 2009', '2010 - 2019',
@@ -93,7 +89,6 @@ export default function FiltrosScreen({ navigation, route }) {
 
   const [generosSelecionados, setGenerosSelecionados] = useState(['Todos']);
   const [duracaoSelecionada, setDuracaoSelecionada] = useState(['Qualquer duração']);
-  const [plataformasSelecionadas, setPlataformasSelecionadas] = useState(['Todos']);
   const [anosSelecionados, setAnosSelecionados] = useState(['Todos']);
 
   function alternar(opcao, selecionados, setSelecionados, tipo = 'multi') {
@@ -122,7 +117,6 @@ export default function FiltrosScreen({ navigation, route }) {
     const filtros = {
       generos: generosSelecionados.includes('Todos') ? [] : generosSelecionados,
       duracao: duracaoSelecionada[0] || 'Qualquer duração',
-      plataformas: plataformasSelecionadas.includes('Todos') ? [] : plataformasSelecionadas,
       ano: anosSelecionados[0] || 'Todos',
     };
 
@@ -163,13 +157,6 @@ export default function FiltrosScreen({ navigation, route }) {
           opcoes={duracoes}
           selecionados={duracaoSelecionada}
           onSelecionar={opcao => alternar(opcao, duracaoSelecionada, setDuracaoSelecionada, 'single')}
-        />
-
-        <FiltroCard
-          titulo="Plataforma de Streaming"
-          opcoes={plataformas}
-          selecionados={plataformasSelecionadas}
-          onSelecionar={opcao => alternar(opcao, plataformasSelecionadas, setPlataformasSelecionadas)}
         />
 
         <FiltroCard

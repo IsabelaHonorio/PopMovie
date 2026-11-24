@@ -1,4 +1,3 @@
-
 import {
   createContext,
   useContext,
@@ -33,6 +32,13 @@ const TEMAS_BANCO = {
   6: { primary: '#00A5CF', backgroundMode: 'light' },
 };
 
+const FORCAR_TEMA_PADRAO = 'popmovie-forcar-tema-padrao';
+
+function temaPadraoForcado() {
+  return typeof window !== 'undefined' &&
+    window.localStorage?.getItem(FORCAR_TEMA_PADRAO) === '1';
+}
+
 const ThemeContext = createContext({
   primary: DEFAULT_PRIMARY,
   primaryDark: '#7A2DE8',
@@ -46,6 +52,7 @@ const ThemeContext = createContext({
   setPrimary: () => {},
   setBackgroundMode: () => {},
   salvarTema: async () => {},
+  recarregarTemaConta: async () => {},
 });
 
 export function ThemeProvider({ children }) {
@@ -66,10 +73,13 @@ export function ThemeProvider({ children }) {
     async function carregarTema(idUsuario) {
       const requisicaoAtual = ++numeroRequisicao;
 
-      // Enquanto consulta a conta, utiliza o tema padrão.
-      restaurarTemaPadrao();
+      if (!idUsuario || telaPublicaAtiva) return;
 
-      if (!idUsuario) return;
+      // Se houver uma marca de logout, mantém o tema padrão sem consultar o banco.
+      if (temaPadraoForcado()) {
+        restaurarTemaPadrao();
+        return;
+      }
 
       try {
         const { data, error } = await supabase
@@ -199,6 +209,40 @@ export function ThemeProvider({ children }) {
       setBackgroundMode(novoFundo);
     }
 
+    async function recarregarTemaConta() {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(FORCAR_TEMA_PADRAO);
+      }
+
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error || !data?.session?.user) {
+        return;
+      }
+
+      const { data: dadosUsuario, error: erroUsuario } = await supabase
+        .from('usuario')
+        .select('tema')
+        .eq('id_usuario', data.session.user.id)
+        .maybeSingle();
+
+      if (erroUsuario) {
+        console.error('Erro ao recarregar tema:', erroUsuario);
+        return;
+      }
+
+      const temaSalvo = dadosUsuario?.tema == null
+        ? null
+        : TEMAS_BANCO[dadosUsuario.tema];
+
+      if (temaSalvo) {
+        setPrimary(temaSalvo.primary);
+        setBackgroundMode(temaSalvo.backgroundMode);
+      } else {
+        restaurarTemaPadrao();
+      }
+    }
+
     return {
       primary: selectedTheme.primary,
       primaryDark: selectedTheme.primaryDark,
@@ -212,6 +256,7 @@ export function ThemeProvider({ children }) {
       setPrimary,
       setBackgroundMode,
       salvarTema,
+      recarregarTemaConta,
     };
   }, [backgroundMode, isLight, selectedTheme]);
 
@@ -334,3 +379,9 @@ export const commonStyles = StyleSheet.create({
     marginTop: -7,
   },
 });
+
+let telaPublicaAtiva = false;
+
+export function definirTelaPublicaAtiva(ativa) {
+  telaPublicaAtiva = ativa;
+}

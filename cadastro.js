@@ -10,10 +10,19 @@ import {
   Image,
 } from 'react-native';
 
-import { commonStyles, useTheme } from './theme';
+import { commonStyles, useTheme, definirTelaPublicaAtiva } from './theme';
 
 export default function CadastroScreen({ navigation, route }) {
-  const { background, primary, text } = useTheme();
+  definirTelaPublicaAtiva(true);
+
+  const {
+    background,
+    primary,
+    text,
+    textSoft,
+    setPrimary,
+    setBackgroundMode,
+  } = useTheme();
 
   const senhaInicial = route?.params?.senha || '';
 
@@ -28,6 +37,11 @@ export default function CadastroScreen({ navigation, route }) {
   const [erroEmail, setErroEmail] = useState('');
   const [erroSenha, setErroSenha] = useState('');
   const [erroConfirmarSenha, setErroConfirmarSenha] = useState('');
+
+  useEffect(() => {
+    setPrimary('#963BFF');
+    setBackgroundMode('dark');
+  }, [setPrimary, setBackgroundMode]);
 
   useEffect(() => {
     const apelidoSalvo =
@@ -183,6 +197,10 @@ export default function CadastroScreen({ navigation, route }) {
             secureTextEntry
           />
 
+          <Text style={[styles.mensagemSenha, { color: textSoft }]}> 
+            A senha deve ter pelo menos 6 caracteres e 1 caractere especial.
+          </Text>
+
           {erroSenha !== '' && (
             <Text style={styles.mensagemErro}>{erroSenha}</Text>
           )}
@@ -246,6 +264,12 @@ const styles = StyleSheet.create({
 
   mensagemErro: {
     color: '#FF5252',
+    fontSize: 12,
+    marginTop: -12,
+    marginBottom: 14,
+  },
+
+  mensagemSenha: {
     fontSize: 12,
     marginTop: -12,
     marginBottom: 14,

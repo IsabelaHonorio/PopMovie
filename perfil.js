@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
@@ -53,6 +52,8 @@ export default function PerfilScreen({ navigation, route }) {
     surfaceElevated,
     text,
     textSoft,
+    setPrimary,
+    setBackgroundMode,
   } = useTheme();
 
   const { apelido, senha } = route.params || {};
@@ -138,6 +139,38 @@ export default function PerfilScreen({ navigation, route }) {
       ativo = false;
     };
   }, []);
+
+  const sairDaConta = async () => {
+    setPrimary('#963BFF');
+    setBackgroundMode('dark');
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('popmovie-forcar-tema-padrao', '1');
+    }
+
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+
+      if (error) {
+        throw error;
+      }
+
+      if (typeof window !== 'undefined' && window.localStorage) {
+        Object.keys(window.localStorage)
+          .filter((chave) => chave.startsWith('sb-'))
+          .forEach((chave) => window.localStorage.removeItem(chave));
+
+        window.localStorage.setItem('popmovie-forcar-tema-padrao', '1');
+      }
+    } catch (erro) {
+      console.error('Erro ao sair da conta:', erro);
+    } finally {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+  };
 
   // CONEXÃO COM AS OUTRAS TELAS
   if (telaAtual === 'AlterarSenha') {
@@ -327,6 +360,35 @@ export default function PerfilScreen({ navigation, route }) {
                 name="edit-2"
                 size={15}
                 color={primary}
+              />
+            </View>
+          </TouchableOpacity>
+
+          {/* BOTÃO DE LOGOUT */}
+          <TouchableOpacity
+            style={estilos.itemOpcao}
+            activeOpacity={0.7}
+            onPress={sairDaConta}
+          >
+            <Text
+              style={[
+                estilos.textoOpcao,
+                estilos.textoSair,
+              ]}
+            >
+              Sair da conta
+            </Text>
+
+            <View
+              style={[
+                estilos.acaoOpcao,
+                { backgroundColor: surface },
+              ]}
+            >
+              <Ionicons
+                name="log-out-outline"
+                size={16}
+                color="#FF5A5F"
               />
             </View>
           </TouchableOpacity>
@@ -668,5 +730,10 @@ const estilos = StyleSheet.create({
 
   itemNav: {
     padding: 10,
+  },
+
+  textoSair: {
+    color: '#FF5A5F',
+    fontWeight: 'bold',
   },
 });

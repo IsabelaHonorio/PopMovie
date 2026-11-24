@@ -1,9 +1,22 @@
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, commonStyles, useTheme } from './theme';
+import { COLORS, commonStyles, useTheme, definirTelaPublicaAtiva } from './theme';
 
 export default function TelaInicial({ navigation }) {
-  const { background, primary, text } = useTheme();
+  const {
+    background,
+    primary,
+    text,
+    setPrimary,
+    setBackgroundMode,
+  } = useTheme();
+
+  useEffect(() => {
+    definirTelaPublicaAtiva(true);
+    setPrimary('#963BFF');
+    setBackgroundMode('dark');
+  }, [setPrimary, setBackgroundMode]);
 
   return (
     <View style={[commonStyles.container, { backgroundColor: background }]}>

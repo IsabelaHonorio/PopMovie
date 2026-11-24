@@ -1,4 +1,3 @@
-
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -107,6 +106,18 @@ const linking = {
 
   config: {
     screens: {
+      Inicio: '',
+      Login: 'login',
+      Cadastro: 'cadastro',
+      CadastroFavoritos: 'cadastro-favoritos',
+      Principal: 'principal',
+      Buscar: 'buscar',
+      ConteudoSorteado: 'sorteio',
+      DetalhesFilme: 'filme',
+      MinhaLista: 'minha-lista',
+      ConteudosAvaliados: 'avaliados',
+      Perfil: 'perfil',
+      Filtros: 'filtros',
       RedefinirSenha: 'redefinir-senha',
     },
   },

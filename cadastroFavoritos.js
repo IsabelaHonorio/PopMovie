@@ -16,7 +16,7 @@ import {
   isMovieFavorite,
   toggleFavoriteMovie as toggleGlobalFavoriteMovie,
 } from './favoriteMoviesStore';
-import { useTheme } from './theme';
+import { useTheme, definirTelaPublicaAtiva } from './theme';
 import { supabase, salvarFuncionalidadesFilme } from './lib/supabase';
 
 export default function CadastroFavoritos({ navigation, route }) {
@@ -137,11 +137,11 @@ export default function CadastroFavoritos({ navigation, route }) {
       });
     }
 
+    definirTelaPublicaAtiva(false);
+
     navigation.navigate('Principal', {
       apelido: nomeUsuario,
       nomeUsuario,
-      email,
-      senha,
     });
   };
 

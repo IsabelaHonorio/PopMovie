@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,11 +8,21 @@ import {
   Pressable,
 } from 'react-native';
 
-import { commonStyles, useTheme } from './theme';
+import { commonStyles, useTheme, definirTelaPublicaAtiva } from './theme';
 import { supabase } from './lib/supabase';
 
 export default function TelaLogin({ navigation }) {
-  const { background, primary, text, textSoft } = useTheme();
+  definirTelaPublicaAtiva(true);
+
+  const {
+    background,
+    primary,
+    text,
+    textSoft,
+    setPrimary,
+    setBackgroundMode,
+    recarregarTemaConta,
+  } = useTheme();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -21,6 +31,18 @@ export default function TelaLogin({ navigation }) {
   const [erroSenha, setErroSenha] = useState('');
   const [erroLogin, setErroLogin] = useState('');
   const [carregando, setCarregando] = useState(false);
+
+  useEffect(() => {
+    setPrimary('#963BFF');
+    setBackgroundMode('dark');
+  }, [setPrimary, setBackgroundMode]);
+
+  useEffect(() => {
+    // Força o tema padrão ao exibir a tela de login
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('popmovie-forcar-tema-padrao');
+    }
+  }, []);
 
   const entrar = async () => {
     let formularioValido = true;
@@ -45,6 +67,8 @@ export default function TelaLogin({ navigation }) {
 
     setCarregando(true);
 
+    definirTelaPublicaAtiva(false);
+
     // Tenta fazer login com o Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -52,6 +76,7 @@ export default function TelaLogin({ navigation }) {
     });
 
     if (error) {
+      definirTelaPublicaAtiva(true);
       setCarregando(false);
 
       if (
@@ -68,6 +93,9 @@ export default function TelaLogin({ navigation }) {
     }
 
     const usuario = data.user;
+
+    definirTelaPublicaAtiva(false);
+    await recarregarTemaConta();
 
     // Obtém o apelido do usuário
     const apelido =
@@ -99,8 +127,6 @@ export default function TelaLogin({ navigation }) {
     // Navega para a tela principal
     navigation.navigate('Principal', {
       apelido,
-      email: email.trim(),
-      senha,
     });
   };
 
@@ -108,7 +134,16 @@ export default function TelaLogin({ navigation }) {
     <View style={[commonStyles.container, { backgroundColor: background }]}>
       <Pressable
         style={styles.backButton}
-        onPress={() => navigation.goBack()}
+        onPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Inicio' }],
+            });
+          }
+        }}
       >
         <Text style={[styles.backArrow, { color: primary }]}>‹</Text>
       </Pressable>
